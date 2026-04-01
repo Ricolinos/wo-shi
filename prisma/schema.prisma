@@ -1,0 +1,316 @@
+// wo-shi — prisma schema
+// stack: Next.js 15 + Auth.js v5 + PostgreSQL (Neon)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth (compatible con Auth.js v5) ─────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Usuario ──────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  avatar        String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // config de privacidad y feed
+  privacyConfig  PrivacyConfig?
+  feedConfig     FeedConfig?
+
+  // relaciones
+  accounts       Account[]
+  sessions       Session[]
+  entries        Entry[]
+  bonds          Bond[]
+  groups         Group[]
+  feedPermissions FeedPermission[]
+  tagApprovals   TagApproval[]
+  sentFollows    Follow[]          @relation("follower")
+  receivedFollows Follow[]         @relation("following")
+}
+
+model PrivacyConfig {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  defaultEntryVisibility Visibility @default(PRIVATE)
+  allowTagging          Boolean @default(true)
+  requireTagApproval    Boolean @default(true)
+  showOnSearch          Boolean @default(true)
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FeedConfig {
+  id           String      @id @default(cuid())
+  userId       String      @unique
+  defaultView  FeedView    @default(LIST)
+  chartMetric  ChartMetric @default(FREQUENCY)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Entrada de Diario ────────────────────────────────────────────────────────
+
+model Entry {
+  id          String     @id @default(cuid())
+  userId      String
+  title       String?
+  body        String     @db.Text
+  date        DateTime   @default(now())
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  visibility  Visibility @default(PRIVATE)
+  editAccess  EditAccess @default(ONLY_ME)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media           Media[]
+  entryBonds      EntryBond[]
+  feedPermissions FeedPermission[]
+  tagApprovals    TagApproval[]
+  groupEntries    GroupEntry[]
+}
+
+// ─── Media ────────────────────────────────────────────────────────────────────
+
+model Media {
+  id        String    @id @default(cuid())
+  entryId   String
+  type      MediaType
+  url       String
+  filename  String?
+  size      Int?
+  duration  Int?      // segundos (para audio/video)
+  createdAt DateTime  @default(now())
+  entry     Entry     @relation(fields: [entryId], references: [id], onDelete: Cascade)
+}
+
+// ─── Vínculo (Bond) ───────────────────────────────────────────────────────────
+// Híbrido: empieza como tag, madura a entidad a partir de 5 menciones
+
+model Bond {
+  id             String       @id @default(cuid())
+  userId         String       // dueño del vínculo
+  name           String
+  type           BondType
+  maturityLevel  Int          @default(0) // 0-4 = tag, 5+ = entity
+  description    String?
+  avatar         String?
+  isPrivate      Boolean      @default(true)
+  linkedUserId   String?      // si el vínculo está vinculado a otro usuario
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entryBonds     EntryBond[]
+  snapshots      BondSnapshot[]
+  tagApprovals   TagApproval[]
+  groupBonds     GroupBond[]
+}
+
+// ─── EntryBond (pivot: entrada ↔ vínculo) ────────────────────────────────────
+
+model EntryBond {
+  id          String   @id @default(cuid())
+  entryId     String
+  bondId      String
+  intensity   Float    @default(5) // 1-10: qué tan fuerte es el vínculo en esta entrada
+  proximity   Float    @default(5) // 1-10: cercanía física/emocional/mental
+  notified    Boolean  @default(false)
+  note        String?  // nota privada sobre este vínculo en esta entrada
+  createdAt   DateTime @default(now())
+
+  entry       Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  bond        Bond     @relation(fields: [bondId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, bondId])
+}
+
+// ─── BondSnapshot (evolución temporal del vínculo) ────────────────────────────
+
+model BondSnapshot {
+  id          String   @id @default(cuid())
+  bondId      String
+  date        DateTime @default(now())
+  intensity   Float
+  proximity   Float
+  note        String?
+
+  bond        Bond     @relation(fields: [bondId], references: [id], onDelete: Cascade)
+}
+
+// ─── Grupos ───────────────────────────────────────────────────────────────────
+
+model Group {
+  id          String      @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  isShared    Boolean     @default(false)
+  visibility  Visibility  @default(PRIVATE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupBonds  GroupBond[]
+  groupEntries GroupEntry[]
+}
+
+model GroupBond {
+  groupId   String
+  bondId    String
+  addedAt   DateTime @default(now())
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  bond      Bond     @relation(fields: [bondId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, bondId])
+}
+
+model GroupEntry {
+  groupId   String
+  entryId   String
+  addedAt   DateTime @default(now())
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  entry     Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, entryId])
+}
+
+// ─── Permisos de feed y aprobación de tags ────────────────────────────────────
+
+model FeedPermission {
+  id        String           @id @default(cuid())
+  entryId   String
+  userId    String           // usuario al que se otorga permiso
+  status    PermissionStatus @default(PENDING)
+  grantedAt DateTime?
+  createdAt DateTime         @default(now())
+
+  entry     Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, userId])
+}
+
+model TagApproval {
+  id         String           @id @default(cuid())
+  entryId    String
+  bondId     String
+  requestedBy String          // userId del autor
+  status     PermissionStatus @default(PENDING)
+  approvedAt DateTime?
+  createdAt  DateTime         @default(now())
+
+  entry      Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  bond       Bond   @relation(fields: [bondId], references: [id], onDelete: Cascade)
+  requester  User   @relation(fields: [requestedBy], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, bondId])
+}
+
+// ─── Follows ──────────────────────────────────────────────────────────────────
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User @relation("follower",  fields: [followerId],  references: [id], onDelete: Cascade)
+  following   User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Visibility {
+  PRIVATE      // solo el autor
+  FRIENDS      // followers mutuos
+  PUBLIC       // cualquiera
+}
+
+enum EditAccess {
+  ONLY_ME
+  COLLABORATORS
+}
+
+enum BondType {
+  PERSON
+  EMOTION
+  IDEA
+  BELIEF
+  PLACE
+  GROUP
+  OTHER
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+enum FeedView {
+  LIST
+  GRAPH
+}
+
+enum ChartMetric {
+  FREQUENCY
+  INTENSITY
+  PROXIMITY
+}
+
+enum PermissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
