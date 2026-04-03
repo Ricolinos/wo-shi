@@ -1,4 +1,4 @@
-// src/middleware.ts
+// src/proxy.ts
 // Protege todas las rutas excepto /auth y assets públicos.
 // Cualquier visitante no autenticado es redirigido a /auth.
 

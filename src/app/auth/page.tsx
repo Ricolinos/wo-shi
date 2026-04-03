@@ -1,6 +1,7 @@
 // src/app/auth/page.tsx
 "use client"
 
+import { Suspense } from "react"
 import { useState, useTransition } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -311,7 +312,7 @@ function MagicSentScreen() {
 }
 
 // ─── Página principal ────────────────────────────────────────────────────────
-export default function AuthPage() {
+function AuthContent() {
   const searchParams = useSearchParams()
   const [tab, setTab] = useState<"login" | "register">(
     searchParams.get("tab") === "register" ? "register" : "login"
@@ -370,5 +371,13 @@ export default function AuthPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense>
+      <AuthContent />
+    </Suspense>
   )
 }
