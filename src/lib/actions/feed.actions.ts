@@ -48,7 +48,7 @@ export async function getFeedEntries(filters: FeedFilters = {}): Promise<FeedEnt
   const userId = session.user.id
   const { bondType, visibility } = filters
 
-  const visibilityWhere = buildVisibilityWhere(userId, visibility)
+  const visibilityWhere = await buildVisibilityWhere(userId, visibility)
 
   const entries = await prisma.entry.findMany({
     where: {
@@ -85,15 +85,45 @@ export async function getFeedEntries(filters: FeedFilters = {}): Promise<FeedEnt
   return entries
 }
 
+// ── Helper: obtener IDs de usuarios con follow mutuo ────────────────────────
+// Devuelve los IDs de usuarios que se siguen mutuamente con userId:
+// userId → X y X → userId.
+async function getMutualFollowIds(userId: string): Promise<string[]> {
+  // IDs de usuarios que userId sigue
+  const following = await prisma.follow.findMany({
+    where: { followerId: userId },
+    select: { followingId: true },
+  })
+  const followingIds = following.map(f => f.followingId)
+  if (followingIds.length === 0) return []
+
+  // De esos, filtrar los que también siguen a userId (follow mutuo)
+  const mutuals = await prisma.follow.findMany({
+    where: {
+      followerId: { in: followingIds },
+      followingId: userId,
+    },
+    select: { followerId: true },
+  })
+  return mutuals.map(f => f.followerId)
+}
+
 // Construye la cláusula WHERE según la visibilidad solicitada.
-// Por defecto ("ALL") incluye: entradas propias de cualquier visibilidad + entradas ajenas PUBLIC y FRIENDS.
-function buildVisibilityWhere(userId: string, visibility?: Visibility | "ALL") {
+// Por defecto ("ALL") incluye: entradas propias de cualquier visibilidad +
+// entradas ajenas PUBLIC + entradas FRIENDS de usuarios con follow mutuo.
+async function buildVisibilityWhere(userId: string, visibility?: Visibility | "ALL") {
   if (!visibility || visibility === "ALL") {
+    const mutualIds = await getMutualFollowIds(userId)
     return {
       OR: [
+        // propias (cualquier visibilidad)
         { userId },
+        // ajenas públicas
         { userId: { not: userId }, visibility: "PUBLIC" as Visibility },
-        { userId: { not: userId }, visibility: "FRIENDS" as Visibility },
+        // ajenas de amigos con follow mutuo
+        ...(mutualIds.length > 0
+          ? [{ userId: { in: mutualIds }, visibility: "FRIENDS" as Visibility }]
+          : []),
       ],
     }
   }
@@ -103,10 +133,12 @@ function buildVisibilityWhere(userId: string, visibility?: Visibility | "ALL") {
   }
 
   if (visibility === "FRIENDS") {
+    const mutualIds = await getMutualFollowIds(userId)
+    if (mutualIds.length === 0) return { userId, visibility: "FRIENDS" as Visibility }
     return {
       OR: [
         { userId, visibility: "FRIENDS" as Visibility },
-        { userId: { not: userId }, visibility: "FRIENDS" as Visibility },
+        { userId: { in: mutualIds }, visibility: "FRIENDS" as Visibility },
       ],
     }
   }

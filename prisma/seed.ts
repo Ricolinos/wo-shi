@@ -186,7 +186,23 @@ async function main() {
   })
   console.log("  ✓ Entrada 5: Elena — foto + video")
 
-  console.log("\n✅ Seed completado — 5 usuarios, 5 entradas")
+  // ── Follows mutuos para que las entradas FRIENDS sean visibles ───────────────
+  // Cada usuario del seed se sigue mutuamente con los demás
+  const seedUserIds = Object.values(users)
+  for (let i = 0; i < seedUserIds.length; i++) {
+    for (let j = i + 1; j < seedUserIds.length; j++) {
+      await prisma.follow.createMany({
+        data: [
+          { followerId: seedUserIds[i], followingId: seedUserIds[j] },
+          { followerId: seedUserIds[j], followingId: seedUserIds[i] },
+        ],
+        skipDuplicates: true,
+      })
+    }
+  }
+  console.log("  ✓ Follows mutuos entre usuarios del seed")
+
+  console.log("\n✅ Seed completado — 5 usuarios, 5 entradas, follows mutuos")
   await prisma.$disconnect()
 }
 
