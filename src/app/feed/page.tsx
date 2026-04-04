@@ -76,7 +76,8 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
         <AppSidebar />
 
         {/* feed wrapper — feed centrado con espaciador izquierdo */}
-        <div className="flex-1 flex justify-center overflow-y-auto px-6 py-7 gap-6 min-w-0">
+        {/* items-start: los items crecen con su contenido (no stretch) → overflow-y-auto funciona */}
+        <div className="flex-1 flex items-start justify-center overflow-y-auto px-6 py-7 gap-6 min-w-0">
 
           {/* espaciador: mismo ancho que PrivacyPanel → feed visualmente centrado */}
           <div className="w-[182px] flex-shrink-0" />
