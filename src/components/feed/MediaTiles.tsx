@@ -28,8 +28,8 @@ export function MediaTiles({ media }: Props) {
 
 function Grid1({ item }: { item: MediaItem }) {
   return (
-    <div className="w-full aspect-square overflow-hidden">
-      <MediaItemRenderer item={item} className="w-full h-full" />
+    <div className="w-full aspect-square relative overflow-hidden">
+      <MediaItemRenderer item={item} />
     </div>
   )
 }
@@ -40,8 +40,8 @@ function Grid2({ items }: { items: MediaItem[] }) {
   return (
     <div className="grid grid-cols-2 gap-px bg-[#e2e2ef]">
       {items.map(item => (
-        <div key={item.id} className="aspect-square overflow-hidden">
-          <MediaItemRenderer item={item} className="w-full h-full" />
+        <div key={item.id} className="aspect-square relative overflow-hidden">
+          <MediaItemRenderer item={item} />
         </div>
       ))}
     </div>
@@ -49,18 +49,20 @@ function Grid2({ items }: { items: MediaItem[] }) {
 }
 
 // ── 3 archivos — 1 grande (2fr) + 2 apilados (1fr) ───────────────────────────
+// El tile grande define la altura de la fila via aspect-square.
+// Los tiles pequeños usan absolute inset-0 para no depender de h-full con flex-1.
 
 function Grid3({ items }: { items: MediaItem[] }) {
   const [main, ...rest] = items
   return (
     <div className="grid gap-px bg-[#e2e2ef]" style={{ gridTemplateColumns: "2fr 1fr" }}>
-      <div className="aspect-square overflow-hidden">
-        <MediaItemRenderer item={main} className="w-full h-full" />
+      <div className="aspect-square relative overflow-hidden">
+        <MediaItemRenderer item={main} />
       </div>
       <div className="flex flex-col gap-px bg-[#e2e2ef]">
         {rest.map(item => (
-          <div key={item.id} className="flex-1 overflow-hidden min-h-0">
-            <MediaItemRenderer item={item} className="w-full h-full" />
+          <div key={item.id} className="flex-1 relative overflow-hidden min-h-0">
+            <MediaItemRenderer item={item} />
           </div>
         ))}
       </div>
@@ -79,8 +81,8 @@ function Grid4({ items }: { items: MediaItem[] }) {
       {visible.map((item, i) => {
         const isLast = i === 3 && remaining > 0
         return (
-          <div key={item.id} className="relative overflow-hidden min-h-0">
-            <MediaItemRenderer item={item} className="w-full h-full" />
+          <div key={item.id} className="relative overflow-hidden">
+            <MediaItemRenderer item={item} />
             {isLast && (
               <div className="absolute inset-0 flex items-center justify-center bg-[rgba(83,74,183,0.65)]">
                 <span className="text-white text-xl font-medium">+{remaining}</span>
@@ -94,14 +96,15 @@ function Grid4({ items }: { items: MediaItem[] }) {
 }
 
 // ── Componente base: imagen o video ───────────────────────────────────────────
+// Usa absolute inset-0 para llenar el contenedor sin depender de h-full con %-height.
 
-function MediaItemRenderer({ item, className }: { item: MediaItem; className: string }) {
+function MediaItemRenderer({ item }: { item: MediaItem }) {
   if (item.type === "VIDEO") {
     return (
-      <div className={`relative ${className}`}>
+      <>
         <video
           src={item.url}
-          className="w-full h-full object-cover object-center"
+          className="absolute inset-0 w-full h-full object-cover object-center"
           muted
           preload="metadata"
         />
@@ -111,7 +114,7 @@ function MediaItemRenderer({ item, className }: { item: MediaItem; className: st
             <span className="text-[#1a1a2e] text-sm ml-0.5">▶</span>
           </div>
         </div>
-      </div>
+      </>
     )
   }
 
@@ -120,7 +123,7 @@ function MediaItemRenderer({ item, className }: { item: MediaItem; className: st
     <img
       src={item.url}
       alt=""
-      className={`object-cover object-center ${className}`}
+      className="absolute inset-0 w-full h-full object-cover object-center"
       loading="lazy"
     />
   )
