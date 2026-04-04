@@ -49,9 +49,11 @@ const VISIBILITY_CONFIG = {
 
 function relativeTime(date: Date): string {
   const diff = Date.now() - new Date(date).getTime()
+  if (diff < 0) return "Ahora mismo"
   const mins  = Math.floor(diff / 60000)
   const hours = Math.floor(mins / 60)
   const days  = Math.floor(hours / 24)
+  if (mins < 1)   return "Ahora mismo"
   if (mins < 60)  return `Hace ${mins} min`
   if (hours < 24) return `Hace ${hours} ${hours === 1 ? "hora" : "horas"}`
   if (days === 1) return "Ayer"
