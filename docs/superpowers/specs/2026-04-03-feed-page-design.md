@@ -141,7 +141,7 @@ Mínimo 4 entradas para poblar el feed en desarrollo. Deben cubrir todos los cas
 | 4 | Andrés P. | 1 foto | `PUBLIC` | sentimiento, idea |
 | 5 | Elena V. | 2 archivos (foto + video) | `FRIENDS` | lugar, emoción, idea |
 
-Las URLs de media se toman de `picsum.photos` (imágenes) o se usan archivos de audio públicos de internet.
+Las URLs de media se toman de `picsum.photos` (imágenes) y archivos de audio públicos. El seed se implementa en `prisma/seed.ts` y se ejecuta con `npx prisma db seed`.
 
 ---
 
@@ -187,7 +187,7 @@ src/
     └── seed.ts                       ← seed con 5 entradas ficticias
 ```
 
-La ruta `/` ya redirige a `/dashboard`. Habrá que decidir si `/feed` reemplaza a `/dashboard` como home o convive con él. Por ahora se crea como ruta separada.
+La ruta `/` redirige a `/feed` (home después del login). El dashboard existente en `/dashboard` queda como stub o se elimina en esta iteración.
 
 ---
 
