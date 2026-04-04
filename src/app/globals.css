@@ -24,3 +24,24 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Design tokens — wo-shi */
+:root {
+  /* fondos */
+  --color-background-primary:   #ffffff;
+  --color-background-secondary: #f4f4f8;
+  --color-background-tertiary:  #f0eff8;
+  --color-background-danger:    #fef2f2;
+
+  /* bordes */
+  --color-border-primary:   #c8c8d8;
+  --color-border-secondary: #e2e2ef;
+  --color-border-tertiary:  #ededf5;
+  --color-border-danger:    #fecaca;
+
+  /* texto */
+  --color-text-primary:   #1a1a2e;
+  --color-text-secondary: #555566;
+  --color-text-tertiary:  #9999aa;
+  --color-text-danger:    #dc2626;
+}
