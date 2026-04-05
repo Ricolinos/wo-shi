@@ -310,8 +310,8 @@ function MagicSentScreen() {
   )
 }
 
-// ─── Página principal ────────────────────────────────────────────────────────
-export default function AuthPage() {
+// ─── Contenido interno (necesita useSearchParams) ────────────────────────────
+function AuthPageContent() {
   const searchParams = useSearchParams()
   const [tab, setTab] = useState<"login" | "register">(
     searchParams.get("tab") === "register" ? "register" : "login"
@@ -370,5 +370,16 @@ export default function AuthPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+// ─── Página principal ────────────────────────────────────────────────────────
+import { Suspense } from "react"
+
+export default function AuthPage() {
+  return (
+    <Suspense>
+      <AuthPageContent />
+    </Suspense>
   )
 }
