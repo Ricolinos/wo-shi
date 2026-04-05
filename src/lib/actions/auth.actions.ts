@@ -31,7 +31,7 @@ export async function registerUser(
 
   const parsed = registerSchema.safeParse(raw)
   if (!parsed.success) {
-    const first = parsed.error.errors[0]
+    const first = parsed.error.issues[0]
     return { ok: false, error: first.message, field: String(first.path[0]) }
   }
 
