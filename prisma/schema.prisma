@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ─── Auth (compatible con Auth.js v5) ─────────────────────────────────────────
@@ -136,14 +135,15 @@ model Media {
 
 model Bond {
   id             String       @id @default(cuid())
-  userId         String       // dueño del vínculo
+  userId         String
   name           String
   type           BondType
-  maturityLevel  Int          @default(0) // 0-4 = tag, 5+ = entity
+  subtype        String?      // vocabulario controlado en src/lib/bond-subtypes.ts
+  maturityLevel  Int          @default(0)
   description    String?
   avatar         String?
   isPrivate      Boolean      @default(true)
-  linkedUserId   String?      // si el vínculo está vinculado a otro usuario
+  linkedUserId   String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
