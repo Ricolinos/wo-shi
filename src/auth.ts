@@ -1,5 +1,7 @@
 // src/auth.ts
 // Auth.js v5 — Google + Credentials + Magic Link (Resend)
+// Solo se importa en server components y server actions (Node.js runtime).
+// El middleware usa auth.config.ts (Edge-safe).
 
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
@@ -9,15 +11,12 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
+import { authConfig } from "@/auth.config"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  pages: {
-    signIn: "/auth",
-    error: "/auth?error=true",
-    verifyRequest: "/auth?verify=true",
-  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
