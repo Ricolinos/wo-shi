@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Default de Next.js es 1mb — insuficiente para fotos/video de una
+      // entrada de diario. saveEntry() sube a Vercel Blob vía Server Action,
+      // así que el body completo (incluida la media) pasa por este límite.
+      bodySizeLimit: "15mb",
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "img.clerk.com", pathname: "**" },

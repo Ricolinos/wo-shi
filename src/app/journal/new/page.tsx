@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Column, Row, Textarea, Input, Button, Text, Tag, IconButton, Heading, DateInput, Media } from "@once-ui-system/core"
+import { Column, Row, Textarea, Input, Button, Text, Tag, IconButton, Heading, DateInput, NumberInput, Media, useToast } from "@once-ui-system/core"
 import { PersonModal } from "@/components/journal/PersonModal"
 import { EmotionModal } from "@/components/journal/EmotionModal"
 import { IdeaModal } from "@/components/journal/IdeaModal"
@@ -10,6 +10,40 @@ import { AppShell } from "@/components/layout/AppShell"
 import { saveEntry } from "@/lib/actions/entry.actions"
 import type { EntryDraft, PersonBond, EmotionBond, IdeaBond, Visibility, MediaFile, MediaType } from "@/types/journal"
 import { EMPTY_DRAFT } from "@/types/journal"
+import styles from "./new-entry.module.css"
+
+// Videos no se comprimen en el cliente (requeriría ffmpeg.wasm) — solo se
+// valida un tope de tamaño, dejando margen bajo bodySizeLimit (15mb) del
+// server action una vez sumadas las fotos ya comprimidas.
+const MAX_VIDEO_BYTES = 12 * 1024 * 1024
+// Lado más largo al que se reescala cualquier imagen antes de subirla.
+const MAX_IMAGE_DIMENSION = 1920
+const IMAGE_JPEG_QUALITY = 0.8
+
+/** Redimensiona y reexporta una imagen como JPEG vía Canvas para aligerar el payload. */
+async function compressImage(file: File): Promise<File> {
+  const bitmap = await createImageBitmap(file)
+  let { width, height } = bitmap
+  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+    if (width >= height) {
+      height = Math.round((height / width) * MAX_IMAGE_DIMENSION)
+      width = MAX_IMAGE_DIMENSION
+    } else {
+      width = Math.round((width / height) * MAX_IMAGE_DIMENSION)
+      height = MAX_IMAGE_DIMENSION
+    }
+  }
+  const canvas = document.createElement("canvas")
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return file
+  ctx.drawImage(bitmap, 0, 0, width, height)
+  const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/jpeg", IMAGE_JPEG_QUALITY))
+  if (!blob) return file
+  const jpegName = file.name.replace(/\.[^.]+$/, "") + ".jpg"
+  return new File([blob], jpegName, { type: "image/jpeg" })
+}
 
 type ActiveModal = "person" | "emotion" | "idea" | null
 
@@ -30,10 +64,12 @@ const VISIBILITY_OPTS: { value: Visibility; label: string }[] = [
 
 export default function NewEntryPage() {
   const router = useRouter()
+  const { addToast } = useToast()
   const [draft, setDraft] = useState<EntryDraft>(EMPTY_DRAFT)
   const [modal, setModal] = useState<ActiveModal>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isLocating, setIsLocating] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
@@ -70,18 +106,58 @@ export default function NewEntryPage() {
     setDraft(d => ({ ...d, ideas: d.ideas.filter(i => (i.bondId ?? i.name) !== key) }))
   }
 
-  function addMedia(type: MediaType, files: FileList | null) {
+  async function addMedia(type: MediaType, files: FileList | null) {
     if (!files?.length) return
-    const newFiles: MediaFile[] = Array.from(files).map(file => ({
-      id: crypto.randomUUID(),
-      type,
-      file,
-      previewUrl: type === "IMAGE" ? URL.createObjectURL(file) : undefined,
-    }))
-    setDraft(d => ({ ...d, media: [...d.media, ...newFiles] }))
+    const accepted: MediaFile[] = []
+    for (const file of Array.from(files)) {
+      if (type === "VIDEO" && file.size > MAX_VIDEO_BYTES) {
+        addToast({
+          variant: "danger",
+          message: `"${file.name}" pesa más de 12 MB. Los videos no se comprimen automáticamente — usa uno más liviano.`,
+        })
+        continue
+      }
+      let finalFile = file
+      if (type === "IMAGE") {
+        try {
+          finalFile = await compressImage(file)
+        } catch {
+          finalFile = file
+        }
+      }
+      accepted.push({
+        id: crypto.randomUUID(),
+        type,
+        file: finalFile,
+        previewUrl: type === "IMAGE" ? URL.createObjectURL(finalFile) : undefined,
+      })
+    }
+    if (accepted.length) setDraft(d => ({ ...d, media: [...d.media, ...accepted] }))
   }
   function removeMedia(id: string) {
     setDraft(d => ({ ...d, media: d.media.filter(m => m.id !== id) }))
+  }
+
+  function getLocation() {
+    if (!navigator.geolocation) return
+    setIsLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        const { latitude, longitude } = pos.coords
+        setField("latitude", latitude)
+        setField("longitude", longitude)
+        try {
+          const res = await fetch(`/api/geocode/reverse?lat=${latitude}&lon=${longitude}`)
+          const data = await res.json()
+          setField("location", typeof data.place === "string" ? data.place : `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
+        } catch {
+          setField("location", `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
+        } finally {
+          setIsLocating(false)
+        }
+      },
+      () => setIsLocating(false),
+    )
   }
 
   async function handleSave(asDraft = false) {
@@ -106,7 +182,7 @@ export default function NewEntryPage() {
       <Column fillWidth maxWidth="m" paddingY="24" paddingX="16" gap="16" style={{ margin: "0 auto" }}>
         <Row horizontal="between" vertical="center">
           <Row gap="12" vertical="center">
-            <IconButton icon="chevronLeft" variant="secondary" size="xl" onClick={() => router.back()} aria-label="Volver" />
+            <IconButton icon="chevronLeft" variant="secondary" size="xl" className={styles.backButton} onClick={() => router.back()} aria-label="Volver" />
             <Heading variant="display-strong-xs">Nueva entrada</Heading>
           </Row>
           <Row gap="8">
@@ -121,30 +197,48 @@ export default function NewEntryPage() {
           <Input id="entry-title" label="¿Qué pasó hoy?" value={draft.title} onChange={e => setField("title", e.target.value)} />
           <Textarea id="entry-body" label="Escribe libremente. Esto es tuyo…" lines={5} value={draft.body} onChange={e => setField("body", e.target.value)} />
           <Row gap="8" wrap>
+            {/* DateInput con timePicker no dispara onChange al elegir solo el día
+                (la librería espera a que también toques hora/minuto para confirmar
+                el combinado) — eso hacía que un click afuera perdiera el cambio de
+                fecha. Se separa en fecha (confirma sola, sin timePicker) + hora/
+                minuto vía NumberInput, que sí confirman en cada cambio. */}
             <DateInput
-              id="entry-datetime"
-              label="Fecha y hora"
-              timePicker
-              value={new Date(`${draft.date}T${draft.time}:00`)}
+              id="entry-date"
+              label="Fecha"
+              value={new Date(`${draft.date}T00:00:00`)}
               onChange={(d: Date) => {
                 const pad = (n: number) => String(n).padStart(2, "0")
                 setField("date", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`)
-                setField("time", `${pad(d.getHours())}:${pad(d.getMinutes())}`)
               }}
             />
-            <Button
-              variant="secondary"
-              prefixIcon="location"
-              onClick={() => {
-                if (!navigator.geolocation) return
-                navigator.geolocation.getCurrentPosition(pos => {
-                  setField("latitude", pos.coords.latitude)
-                  setField("longitude", pos.coords.longitude)
-                  setField("location", `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`)
-                })
+            <NumberInput
+              id="entry-hour"
+              label="Hora"
+              min={0}
+              max={23}
+              padStart={2}
+              value={Number(draft.time.split(":")[0])}
+              onChange={h => {
+                const pad = (n: number) => String(n).padStart(2, "0")
+                const clamped = Math.min(23, Math.max(0, h))
+                setField("time", `${pad(clamped)}:${draft.time.split(":")[1]}`)
               }}
-            >
-              {draft.location ? draft.location : "Ubicación"}
+            />
+            <NumberInput
+              id="entry-minute"
+              label="Min"
+              min={0}
+              max={59}
+              padStart={2}
+              value={Number(draft.time.split(":")[1])}
+              onChange={m => {
+                const pad = (n: number) => String(n).padStart(2, "0")
+                const clamped = Math.min(59, Math.max(0, m))
+                setField("time", `${draft.time.split(":")[0]}:${pad(clamped)}`)
+              }}
+            />
+            <Button variant="secondary" prefixIcon="location" loading={isLocating} disabled={isLocating} onClick={getLocation}>
+              {isLocating ? "Buscando…" : draft.location ? draft.location : "Ubicación"}
             </Button>
           </Row>
         </Column>
@@ -165,7 +259,7 @@ export default function NewEntryPage() {
                 style={{ cursor: "pointer" }}
               />
             ))}
-            <Button variant="secondary" size="l" onClick={() => setModal("person")}>+ Agregar persona</Button>
+            <Button variant="secondary" onClick={() => setModal("person")}>+ Agregar persona</Button>
           </Row>
         </Column>
 
@@ -185,7 +279,7 @@ export default function NewEntryPage() {
                 style={{ cursor: "pointer" }}
               />
             ))}
-            <Button variant="secondary" size="l" onClick={() => setModal("emotion")}>+ Agregar emoción</Button>
+            <Button variant="secondary" onClick={() => setModal("emotion")}>+ Agregar emoción</Button>
           </Row>
         </Column>
 
@@ -205,7 +299,7 @@ export default function NewEntryPage() {
                 style={{ cursor: "pointer" }}
               />
             ))}
-            <Button variant="secondary" size="l" onClick={() => setModal("idea")}>+ Agregar idea o creencia</Button>
+            <Button variant="secondary" onClick={() => setModal("idea")}>+ Agregar idea o creencia</Button>
           </Row>
         </Column>
 

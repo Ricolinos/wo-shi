@@ -1,0 +1,17 @@
+/*
+ * El prop `size` de IconButton (Once UI) no acepta breakpoints (xl/l/m/s/xs
+ * como los props de layout) — es un string plano. El botón de "volver" debe
+ * cumplir el mínimo táctil de 44px en móvil (usa size="xl" = 48px como base)
+ * pero se siente desproporcionado en escritorio, así que aquí lo compactamos
+ * a 40px por encima de 768px (mismo breakpoint que AppShell.module.css).
+ * !important es necesario porque Once UI ya fija width/height inline vía su
+ * propia clase de módulo (`.xl`) con la misma especificidad (una sola clase).
+ */
+@media (min-width: 769px) {
+  .backButton {
+    width: var(--static-space-40) !important;
+    height: var(--static-space-40) !important;
+    min-width: var(--static-space-40) !important;
+    min-height: var(--static-space-40) !important;
+  }
+}
