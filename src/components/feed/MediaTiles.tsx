@@ -1,6 +1,6 @@
 "use client"
 
-import { Grid, Media, Row, Text } from "@once-ui-system/core"
+import { Grid, Icon, Media, Row, Text } from "@once-ui-system/core"
 
 type MediaItem = { id: string; type: "IMAGE" | "VIDEO" | "AUDIO"; url: string; duration: number | null }
 
@@ -19,13 +19,13 @@ export function MediaTiles({ media }: { media: MediaItem[] }) {
           {m.type === "VIDEO" && (
             <Row position="absolute" fill horizontal="center" vertical="center" background="overlay">
               <Row width="40" height="40" radius="full" background="surface" horizontal="center" vertical="center">
-                ▶
+                <Icon name="play" size="m" onBackground="neutral-strong" />
               </Row>
             </Row>
           )}
           {i === shown.length - 1 && extra > 0 && (
             <Row position="absolute" fill horizontal="center" vertical="center" background="brand-alpha-strong">
-              <Text variant="body-strong-l" onBackground="brand-strong" style={{ color: "white" }}>+{extra}</Text>
+              <Text variant="body-strong-l" onSolid="brand-strong">+{extra}</Text>
             </Row>
           )}
         </Row>

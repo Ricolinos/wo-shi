@@ -60,7 +60,20 @@ export function BondsGraph({ bonds }: { bonds: BondSummary[] }) {
       <text x={CX} y={CY + 4} textAnchor="middle" fontSize="10" fill="var(--brand-on-solid-strong)">Tú</text>
 
       {nodes.map(({ bond, x, y, nodeSize, color }) => (
-        <g key={bond.id} style={{ cursor: "pointer" }} onClick={() => router.push(`/bonds/${bond.id}`)}>
+        <g
+          key={bond.id}
+          style={{ cursor: "pointer" }}
+          onClick={() => router.push(`/bonds/${bond.id}`)}
+          role="button"
+          tabIndex={0}
+          aria-label={`Ver vínculo ${bond.name}`}
+          onKeyDown={e => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              router.push(`/bonds/${bond.id}`)
+            }
+          }}
+        >
           <circle cx={x} cy={y} r={nodeSize} fill={color} />
           <text x={x} y={y + nodeSize + 12} textAnchor="middle" fontSize="10" fill="var(--neutral-on-background-weak)">
             {bond.name.length > 12 ? bond.name.slice(0, 12) + "…" : bond.name}

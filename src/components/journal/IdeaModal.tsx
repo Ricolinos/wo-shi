@@ -6,6 +6,15 @@ import type { IdeaBond } from "@/types/journal"
 
 type TabId = "IDEA" | "BELIEF"
 
+// Elementos con onClick (Tag, Row) no son nativamente accesibles por teclado
+// en Once UI (se renderizan como div) — este handler agrega Enter/Espacio.
+function onKeyActivate(e: React.KeyboardEvent, fn: () => void) {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault()
+    fn()
+  }
+}
+
 interface RecentBond {
   bondId: string
   name: string
@@ -118,10 +127,14 @@ export function IdeaModal({ onClose, onAdd, existing, recentBonds = [] }: Props)
                   border="neutral-alpha-weak"
                   background={selected.has(b.bondId) ? "brand-alpha-weak" : undefined}
                   onClick={() => toggleRecent(b)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => onKeyActivate(e, () => toggleRecent(b))}
+                  aria-label={`Vincular ${b.name}`}
                   style={{ cursor: "pointer" }}
                 >
-                  <Column flex={1} gap="0">
-                    <Text variant="body-default-s">{b.name}</Text>
+                  <Column flex={1} gap="0" style={{ minWidth: 0 }}>
+                    <Text variant="body-default-s" truncate>{b.name}</Text>
                     <Text variant="label-default-s" onBackground="neutral-weak">{b.mentions} menciones</Text>
                   </Column>
                   <Tag variant={b.isMature ? "brand" : "neutral"} label={b.isMature ? "vínculo" : "etiqueta"} />
@@ -152,7 +165,17 @@ export function IdeaModal({ onClose, onAdd, existing, recentBonds = [] }: Props)
         {selected.size > 0 && (
           <Row gap="4" wrap paddingTop="8" borderTop="neutral-alpha-weak">
             {Array.from(selected.entries()).map(([key, item]) => (
-              <Tag key={key} variant="neutral" label={item.name} onClick={() => remove(key)} style={{ cursor: "pointer" }} />
+              <Tag
+                key={key}
+                variant="neutral"
+                label={item.name}
+                onClick={() => remove(key)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => onKeyActivate(e, () => remove(key))}
+                aria-label={`Quitar ${item.name}`}
+                style={{ cursor: "pointer" }}
+              />
             ))}
           </Row>
         )}

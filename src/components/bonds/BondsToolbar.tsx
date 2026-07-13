@@ -4,7 +4,7 @@ import { Row, Column, ToggleButton, SegmentedControl, Text } from "@once-ui-syst
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { BOND_TYPE_LABEL } from "@/lib/bond-subtypes"
 import type { BondType } from "@prisma/client"
-import type { BondsView, BondsFilters } from "@/types/bonds"
+import type { BondsFilters } from "@/types/bonds"
 
 const TYPE_TABS: { value: BondType | "ALL"; label: string }[] = [
   { value: "ALL", label: "Todos" },
@@ -40,6 +40,7 @@ export function BondsToolbar({ filters }: { filters: BondsFilters }) {
     <Column gap="12" fillWidth>
       <Row horizontal="between" vertical="center" wrap gap="12">
         <SegmentedControl
+          fillWidth={false}
           selected={filters.view}
           buttons={[
             { value: "list", label: "Lista" },
@@ -51,18 +52,18 @@ export function BondsToolbar({ filters }: { filters: BondsFilters }) {
         <Row gap="8" wrap>
           <Text variant="label-default-s" onBackground="neutral-weak" style={{whiteSpace:"nowrap"}}>Madurez:</Text>
           {MATURITY_OPTS.map(o => (
-            <ToggleButton key={o.value} size="s" selected={filters.maturity === o.value} onClick={() => setParam("maturity", o.value)}>{o.label}</ToggleButton>
+            <ToggleButton key={o.value} size="xl" selected={filters.maturity === o.value} onClick={() => setParam("maturity", o.value)}>{o.label}</ToggleButton>
           ))}
           <Text variant="label-default-s" onBackground="neutral-weak">Período:</Text>
           {PERIOD_OPTS.map(o => (
-            <ToggleButton key={o.value} size="s" selected={filters.period === o.value} onClick={() => setParam("period", o.value)}>{o.label}</ToggleButton>
+            <ToggleButton key={o.value} size="xl" selected={filters.period === o.value} onClick={() => setParam("period", o.value)}>{o.label}</ToggleButton>
           ))}
         </Row>
       </Row>
 
       <Row gap="4" wrap>
         {TYPE_TABS.map(t => (
-          <ToggleButton key={t.value} size="s" selected={filters.type === t.value} onClick={() => setParam("type", t.value)}>{t.label}</ToggleButton>
+          <ToggleButton key={t.value} size="xl" selected={filters.type === t.value} onClick={() => setParam("type", t.value)}>{t.label}</ToggleButton>
         ))}
       </Row>
     </Column>

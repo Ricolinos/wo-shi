@@ -18,13 +18,14 @@ export function BondDetailSubtoolbar({
   return (
     <Row horizontal="between" vertical="center" wrap gap="12">
       <SegmentedControl
+        fillWidth={false}
         selected={chartType}
         buttons={[{ value: "line", label: "Línea" }, { value: "bars", label: "Barras" }, { value: "scatter", label: "Dispersión" }]}
         onToggle={v => onChartType(v as ChartType)}
       />
-      <Row gap="4">
+      <Row gap="4" wrap>
         {PERIODS.map(p => (
-          <ToggleButton key={p.value} size="s" selected={period === p.value} onClick={() => onPeriod(p.value)}>{p.label}</ToggleButton>
+          <ToggleButton key={p.value} size="xl" selected={period === p.value} onClick={() => onPeriod(p.value)}>{p.label}</ToggleButton>
         ))}
       </Row>
     </Row>

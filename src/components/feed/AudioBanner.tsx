@@ -30,7 +30,7 @@ export function AudioBanner({ url, duration }: { url: string; duration: number |
         onTimeUpdate={e => setProgress(e.currentTarget.currentTime)}
         onEnded={() => setPlaying(false)}
       />
-      <IconButton icon={playing ? "pause" : "play"} variant="secondary" size="m" onClick={toggle} aria-label="Reproducir" />
+      <IconButton icon={playing ? "pause" : "play"} variant="secondary" size="xl" onClick={toggle} aria-label={playing ? "Pausar" : "Reproducir"} />
       <Column gap="4" flex={1}>
         <Row fillWidth height="4" radius="full" background="neutral-alpha-medium" style={{ overflow: "hidden" }}>
           <Row height="4" background="brand-medium" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%" }} />

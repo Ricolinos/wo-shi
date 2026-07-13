@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation"
 import { useUser, useClerk } from "@clerk/nextjs"
 import {
-  Column, Row, IconButton, SmartLink, UserMenu, Option, Line, Text, Avatar,
+  Column, IconButton, SmartLink, UserMenu, Option, Line,
 } from "@once-ui-system/core"
 import type { IconName } from "@once-ui-system/core"
 
@@ -38,7 +38,7 @@ export function AppSidebar() {
             <IconButton
               icon={item.icon}
               variant={pathname.startsWith(item.href) ? "primary" : "tertiary"}
-              size="l"
+              size="xl"
               tooltip={item.label}
               tooltipPosition="right"
               aria-label={item.label}
@@ -49,7 +49,7 @@ export function AppSidebar() {
 
       <Column gap="8" horizontal="center">
         <SmartLink href="/journal/new">
-          <IconButton icon="add" variant="primary" size="l" tooltip="Nueva entrada" tooltipPosition="right" aria-label="Nueva entrada" />
+          <IconButton icon="add" variant="primary" size="xl" tooltip="Nueva entrada" tooltipPosition="right" aria-label="Nueva entrada" />
         </SmartLink>
 
         <UserMenu

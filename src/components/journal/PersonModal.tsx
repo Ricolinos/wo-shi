@@ -93,12 +93,21 @@ export function PersonModal({ onClose, onAdd, existing }: Props) {
                 radius="m"
                 background={selected?.id === r.id ? "brand-alpha-weak" : undefined}
                 onClick={() => !alreadyAdded(r.id) && handleSelect(r)}
+                role="button"
+                tabIndex={alreadyAdded(r.id) ? -1 : 0}
+                onKeyDown={e => {
+                  if ((e.key === "Enter" || e.key === " ") && !alreadyAdded(r.id)) {
+                    e.preventDefault()
+                    handleSelect(r)
+                  }
+                }}
+                aria-label={`Seleccionar a ${r.name}`}
                 style={{ cursor: alreadyAdded(r.id) ? "not-allowed" : "pointer", opacity: alreadyAdded(r.id) ? 0.4 : 1 }}
               >
                 <Avatar src={r.avatar} value={r.avatar ? undefined : r.name.slice(0, 2)} size="s" />
-                <Column flex={1} gap="0">
-                  <Text variant="body-default-s">{r.name}</Text>
-                  <Text variant="label-default-s" onBackground="neutral-weak">
+                <Column flex={1} gap="0" style={{ minWidth: 0 }}>
+                  <Text variant="body-default-s" truncate>{r.name}</Text>
+                  <Text variant="label-default-s" onBackground="neutral-weak" truncate>
                     {r.username ? `@${r.username} · wo-shi` : `vínculo externo${r.mentions ? ` · ${r.mentions} menciones` : ""}`}
                   </Text>
                 </Column>

@@ -8,7 +8,7 @@ import type { BondDetail } from "@/types/bonds"
 export function BondDetailHeader({ bond, comparing, onToggleCompare }: { bond: BondDetail; comparing: boolean; onToggleCompare: () => void }) {
   return (
     <Row gap="16" vertical="center" wrap>
-      <SmartLink href="/bonds"><IconButton icon="chevronLeft" variant="secondary" aria-label="Volver a Vínculos" /></SmartLink>
+      <SmartLink href="/bonds"><IconButton icon="chevronLeft" variant="secondary" size="xl" aria-label="Volver a Vínculos" /></SmartLink>
       <BondAvatar name={bond.name} type={bond.type} avatar={bond.avatar} size="l" />
       <Column flex={1} gap="4">
         <Text variant="display-strong-xs">{bond.name}</Text>

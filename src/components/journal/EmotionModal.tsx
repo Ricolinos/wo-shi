@@ -6,6 +6,15 @@ import type { EmotionBond } from "@/types/journal"
 
 type TabId = "emotion" | "feeling" | "mood"
 
+// Tags con onClick no son nativamente accesibles por teclado (Once UI las
+// renderiza como un div, no un <button>) — este handler agrega Enter/Espacio.
+function onKeyActivate(e: React.KeyboardEvent, fn: () => void) {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault()
+    fn()
+  }
+}
+
 const CATEGORIES: Record<TabId, { label: string; groups: { name: string; items: string[] }[] }> = {
   emotion: {
     label: "Emociones",
@@ -117,6 +126,10 @@ export function EmotionModal({ onClose, onAdd, existing, bondMentions = {} }: Pr
                     variant={selected.has(item) ? "brand" : "neutral"}
                     label={item}
                     onClick={() => toggle(item)}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={selected.has(item)}
+                    onKeyDown={e => onKeyActivate(e, () => toggle(item))}
                     style={{ cursor: "pointer" }}
                   />
                 ))}
@@ -155,7 +168,17 @@ export function EmotionModal({ onClose, onAdd, existing, bondMentions = {} }: Pr
         {selected.size > 0 && (
           <Row gap="4" wrap paddingTop="8" borderTop="neutral-alpha-weak">
             {Array.from(selected.values()).map(item => (
-              <Tag key={item.name} variant="neutral" label={item.name} onClick={() => toggle(item.name)} style={{ cursor: "pointer" }} />
+              <Tag
+                key={item.name}
+                variant="neutral"
+                label={item.name}
+                onClick={() => toggle(item.name)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => onKeyActivate(e, () => toggle(item.name))}
+                aria-label={`Quitar ${item.name}`}
+                style={{ cursor: "pointer" }}
+              />
             ))}
           </Row>
         )}

@@ -19,7 +19,7 @@ export default async function JournalDetailPage({ params }: { params: Promise<{ 
     <AppShell>
       <Column fillWidth maxWidth="m" paddingY="24" paddingX="16" gap="16" style={{ margin: "0 auto" }}>
         <Row gap="12" vertical="center">
-          <SmartLink href="/journal"><IconButton icon="chevronLeft" variant="secondary" aria-label="Volver al diario" /></SmartLink>
+          <SmartLink href="/journal"><IconButton icon="chevronLeft" variant="secondary" size="xl" aria-label="Volver al diario" /></SmartLink>
           <Column flex={1} gap="0">
             <Heading variant="display-strong-xs">{entry.title || "Entrada sin título"}</Heading>
             <Text variant="label-default-s" onBackground="neutral-weak">

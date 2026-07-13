@@ -1,7 +1,7 @@
 "use client"
 
 import { Tag } from "@once-ui-system/core"
-import { BOND_TYPE_SCHEME, BOND_TYPE_LABEL } from "@/lib/bond-subtypes"
+import { BOND_TYPE_SCHEME } from "@/lib/bond-subtypes"
 import type { BondType } from "@prisma/client"
 
 export function BondChips({ bonds }: { bonds: { id: string; name: string; type: BondType }[] }) {

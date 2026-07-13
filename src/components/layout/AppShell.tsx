@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import { Row, IconButton, SmartLink } from "@once-ui-system/core"
 import { AppSidebar, NAV_ITEMS } from "./AppSidebar"
+import styles from "./AppShell.module.css"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -10,7 +11,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <Row fillWidth style={{ minHeight: "100dvh" }}>
       <AppSidebar />
-      <Row flex={1} style={{ overflowY: "auto" }}>
+      {/* padding-bottom condicional (solo <=768px, el mismo breakpoint "s" que
+          usa el bottom-nav de abajo) vive en AppShell.module.css porque el
+          sistema de props de Once UI no ofrece paddingBottom responsivo por
+          breakpoint — así la última card no queda tapada en móvil sin dejar
+          un padding-bottom "fantasma" en desktop. */}
+      <Row flex={1} className={styles.content} style={{ overflowY: "auto" }}>
         {children}
       </Row>
       <Row
@@ -18,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         fillWidth
         horizontal="around"
         vertical="center"
-        paddingY="8"
+        paddingTop="8"
         paddingX="16"
         gap="4"
         background="surface"
@@ -27,20 +33,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         bottom="0"
         left="0"
         zIndex={10}
-        l={{ hide: true }}
+        hide
+        s={{ hide: false }}
+        style={{ paddingBottom: "max(var(--static-space-8), env(safe-area-inset-bottom))" }}
       >
         {NAV_ITEMS.map(item => (
           <SmartLink key={item.href} href={item.href}>
             <IconButton
               icon={item.icon}
               variant={pathname.startsWith(item.href) ? "primary" : "tertiary"}
-              size="l"
+              size="xl"
               aria-label={item.label}
             />
           </SmartLink>
         ))}
         <SmartLink href="/journal/new">
-          <IconButton icon="add" variant="primary" size="l" aria-label="Nueva entrada" />
+          <IconButton icon="add" variant="primary" size="xl" aria-label="Nueva entrada" />
         </SmartLink>
       </Row>
     </Row>

@@ -7,6 +7,15 @@ import type { BondType } from "@prisma/client"
 
 type Candidate = { id: string; name: string; type: BondType }
 
+// Tags con onClick no son nativamente accesibles por teclado (Once UI las
+// renderiza como un div, no un <button>) — este handler agrega Enter/Espacio.
+function onKeyActivate(e: React.KeyboardEvent, fn: () => void) {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault()
+    fn()
+  }
+}
+
 export function BondCompareBar({
   baseName, comparedIds, onAdd, onRemove, onExit,
 }: {
@@ -34,9 +43,19 @@ export function BondCompareBar({
       <Row gap="8" vertical="center" wrap>
         <Tag variant="brand" label={`Comparando: ${baseName}`} />
         {comparedIds.map(c => (
-          <Tag key={c.id} variant="accent" label={c.name} onClick={() => onRemove(c.id)} style={{ cursor: "pointer" }} />
+          <Tag
+            key={c.id}
+            variant="accent"
+            label={c.name}
+            onClick={() => onRemove(c.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => onKeyActivate(e, () => onRemove(c.id))}
+            aria-label={`Quitar ${c.name} de la comparación`}
+            style={{ cursor: "pointer" }}
+          />
         ))}
-        <Button variant="secondary" size="s" onClick={onExit}>Salir de comparación</Button>
+        <Button variant="secondary" size="l" onClick={onExit}>Salir de comparación</Button>
       </Row>
       <Row gap="8" vertical="center">
         <Input id="compare-search" label="+ añadir vínculo" value={query} onChange={e => setQuery(e.target.value)} />
@@ -44,7 +63,17 @@ export function BondCompareBar({
       {results.length > 0 && (
         <Row gap="4" wrap>
           {results.map(r => (
-            <Tag key={r.id} variant="neutral" label={r.name} onClick={() => { onAdd(r); setQuery(""); setResults([]) }} style={{ cursor: "pointer" }} />
+            <Tag
+              key={r.id}
+              variant="neutral"
+              label={r.name}
+              onClick={() => { onAdd(r); setQuery(""); setResults([]) }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => onKeyActivate(e, () => { onAdd(r); setQuery(""); setResults([]) })}
+              aria-label={`Agregar ${r.name} a la comparación`}
+              style={{ cursor: "pointer" }}
+            />
           ))}
         </Row>
       )}

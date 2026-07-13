@@ -13,6 +13,15 @@ import { EMPTY_DRAFT } from "@/types/journal"
 
 type ActiveModal = "person" | "emotion" | "idea" | null
 
+// Tags con onClick no son nativamente accesibles por teclado (Once UI las
+// renderiza como un div, no un <button>) — este handler agrega Enter/Espacio.
+function onKeyActivate(e: React.KeyboardEvent, fn: () => void) {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault()
+    fn()
+  }
+}
+
 const VISIBILITY_OPTS: { value: Visibility; label: string }[] = [
   { value: "PRIVATE", label: "Solo yo" },
   { value: "FRIENDS", label: "Amigos" },
@@ -97,7 +106,7 @@ export default function NewEntryPage() {
       <Column fillWidth maxWidth="m" paddingY="24" paddingX="16" gap="16" style={{ margin: "0 auto" }}>
         <Row horizontal="between" vertical="center">
           <Row gap="12" vertical="center">
-            <IconButton icon="chevronLeft" variant="secondary" onClick={() => router.back()} aria-label="Volver" />
+            <IconButton icon="chevronLeft" variant="secondary" size="xl" onClick={() => router.back()} aria-label="Volver" />
             <Heading variant="display-strong-xs">Nueva entrada</Heading>
           </Row>
           <Row gap="8">
@@ -144,9 +153,19 @@ export default function NewEntryPage() {
           <Text variant="label-default-s" onBackground="neutral-weak">Personas involucradas</Text>
           <Row gap="8" wrap>
             {draft.persons.map((p, i) => (
-              <Tag key={i} variant="brand" label={p.name} onClick={() => removePerson(i)} style={{ cursor: "pointer" }} />
+              <Tag
+                key={i}
+                variant="brand"
+                label={p.name}
+                onClick={() => removePerson(i)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => onKeyActivate(e, () => removePerson(i))}
+                aria-label={`Quitar persona ${p.name}`}
+                style={{ cursor: "pointer" }}
+              />
             ))}
-            <Button variant="secondary" size="s" onClick={() => setModal("person")}>+ Agregar persona</Button>
+            <Button variant="secondary" size="l" onClick={() => setModal("person")}>+ Agregar persona</Button>
           </Row>
         </Column>
 
@@ -154,9 +173,19 @@ export default function NewEntryPage() {
           <Text variant="label-default-s" onBackground="neutral-weak">Emociones y sentimientos</Text>
           <Row gap="8" wrap>
             {draft.emotions.map(e => (
-              <Tag key={e.name} variant="success" label={e.name} onClick={() => removeEmotion(e.name)} style={{ cursor: "pointer" }} />
+              <Tag
+                key={e.name}
+                variant="success"
+                label={e.name}
+                onClick={() => removeEmotion(e.name)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={ev => onKeyActivate(ev, () => removeEmotion(e.name))}
+                aria-label={`Quitar emoción ${e.name}`}
+                style={{ cursor: "pointer" }}
+              />
             ))}
-            <Button variant="secondary" size="s" onClick={() => setModal("emotion")}>+ Agregar emoción</Button>
+            <Button variant="secondary" size="l" onClick={() => setModal("emotion")}>+ Agregar emoción</Button>
           </Row>
         </Column>
 
@@ -164,9 +193,19 @@ export default function NewEntryPage() {
           <Text variant="label-default-s" onBackground="neutral-weak">Ideas y creencias</Text>
           <Row gap="8" wrap>
             {draft.ideas.map(i => (
-              <Tag key={i.bondId ?? i.name} variant="accent" label={i.name} onClick={() => removeIdea(i.bondId ?? i.name)} style={{ cursor: "pointer" }} />
+              <Tag
+                key={i.bondId ?? i.name}
+                variant="accent"
+                label={i.name}
+                onClick={() => removeIdea(i.bondId ?? i.name)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => onKeyActivate(e, () => removeIdea(i.bondId ?? i.name))}
+                aria-label={`Quitar ${i.name}`}
+                style={{ cursor: "pointer" }}
+              />
             ))}
-            <Button variant="secondary" size="s" onClick={() => setModal("idea")}>+ Agregar idea o creencia</Button>
+            <Button variant="secondary" size="l" onClick={() => setModal("idea")}>+ Agregar idea o creencia</Button>
           </Row>
         </Column>
 
@@ -179,7 +218,10 @@ export default function NewEntryPage() {
                   {m.previewUrl
                     ? <Media src={m.previewUrl} unoptimized alt="" aspectRatio="1/1" objectFit="cover" fillWidth />
                     : <Row fillWidth fillHeight horizontal="center" vertical="center">{m.type === "AUDIO" ? "🎙" : "📹"}</Row>}
-                  <IconButton icon="close" size="s" variant="secondary" onClick={() => removeMedia(m.id)} style={{ position: "absolute", top: 2, right: 2 }} aria-label="Quitar" />
+                  {/* size="m" (32px) sigue por debajo del mínimo táctil de 44px, pero
+                      el thumbnail es de 64x64 — un botón de 44px+ lo cubriría casi
+                      por completo. Ver informe de auditoría para el trade-off. */}
+                  <IconButton icon="close" size="m" variant="secondary" onClick={() => removeMedia(m.id)} style={{ position: "absolute", top: 2, right: 2 }} aria-label="Quitar" />
                 </Row>
               ))}
             </Row>
@@ -196,7 +238,17 @@ export default function NewEntryPage() {
           <Text variant="label-default-s" onBackground="neutral-weak">Privacidad</Text>
           <Row gap="8" wrap>
             {VISIBILITY_OPTS.map(opt => (
-              <Tag key={opt.value} variant={draft.visibility === opt.value ? "brand" : "neutral"} label={opt.label} onClick={() => setField("visibility", opt.value)} style={{ cursor: "pointer" }} />
+              <Tag
+                key={opt.value}
+                variant={draft.visibility === opt.value ? "brand" : "neutral"}
+                label={opt.label}
+                onClick={() => setField("visibility", opt.value)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => onKeyActivate(e, () => setField("visibility", opt.value))}
+                aria-pressed={draft.visibility === opt.value}
+                style={{ cursor: "pointer" }}
+              />
             ))}
           </Row>
         </Column>
