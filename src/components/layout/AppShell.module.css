@@ -1,14 +1,17 @@
 /*
  * El sistema de breakpoints de Once UI (props xs/s/m/l/xl) no expone un
- * paddingBottom responsivo, así que este espaciado condicional (necesario
- * para que el contenido scrolleable no quede tapado detrás del bottom-nav
- * fijo en móvil) vive en un CSS Module puntual. El breakpoint 768px replica
- * el "s" por defecto de Once UI (LayoutProvider no lo sobreescribe en este
- * proyecto), que es el mismo breakpoint usado por el prop `s={{ hide: false }}`
- * del bottom-nav en AppShell.tsx.
+ * paddingBottom/paddingLeft responsivo, así que este espaciado condicional
+ * vive en un CSS Module puntual. El breakpoint 768px replica el "s" por
+ * defecto de Once UI (LayoutProvider no lo sobreescribe en este proyecto),
+ * que es el mismo breakpoint usado por el prop `s={{ hide: false }}` del
+ * bottom-nav y `s={{ hide: true }}` del sidebar en AppShell.tsx/AppSidebar.tsx.
  */
 .content {
   padding-bottom: 0;
+  /* AppSidebar ahora es position:fixed (ancho 64px, oculto en <=768px) — el
+     panel de contenido reserva ese espacio con padding-left en vez de
+     depender del flujo flex normal. */
+  padding-left: var(--static-space-64);
 }
 
 @media (max-width: 768px) {
@@ -16,5 +19,8 @@
     /* Alto aproximado del bottom-nav (IconButton size="xl" = 48px + paddingTop
        8px + safe-area-inset-bottom) para que la última card no quede oculta. */
     padding-bottom: calc(var(--static-space-64) + env(safe-area-inset-bottom));
+    /* El sidebar fijo se oculta en este breakpoint (s={{hide:true}}) — sin
+       espacio que reservar para él. */
+    padding-left: 0;
   }
 }

@@ -1,23 +1,39 @@
 "use client"
 
+import { createContext, useContext, useRef } from "react"
+import type { RefObject } from "react"
 import { usePathname } from "next/navigation"
 import { Row, IconButton, SmartLink } from "@once-ui-system/core"
 import { AppSidebar, NAV_ITEMS } from "./AppSidebar"
 import styles from "./AppShell.module.css"
 
+// Expone el nodo DOM del panel de contenido scrolleable (la única parte de
+// la app que hace scroll real — ver AppShell.module.css/layout.tsx) para que
+// componentes anidados (ej. FeedHeader) puedan escuchar su evento `scroll`
+// sin depender de selectors de CSS Modules ni de window/document (que ya no
+// scrollean, ver bug de sidebar fijo).
+const ScrollContainerContext = createContext<RefObject<HTMLDivElement | null> | null>(null)
+
+export function useScrollContainer() {
+  return useContext(ScrollContainerContext)
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const contentRef = useRef<HTMLDivElement>(null)
 
   return (
-    <Row fillWidth style={{ minHeight: "100dvh" }}>
+    <Row fill>
       <AppSidebar />
       {/* padding-bottom condicional (solo <=768px, el mismo breakpoint "s" que
-          usa el bottom-nav de abajo) vive en AppShell.module.css porque el
-          sistema de props de Once UI no ofrece paddingBottom responsivo por
-          breakpoint — así la última card no queda tapada en móvil sin dejar
-          un padding-bottom "fantasma" en desktop. */}
-      <Row flex={1} className={styles.content} style={{ overflowY: "auto" }}>
-        {children}
+          usa el bottom-nav de abajo) y padding-left (ancho del sidebar fijo,
+          anulado en el mismo breakpoint donde el sidebar se oculta) viven en
+          AppShell.module.css porque el sistema de props de Once UI no ofrece
+          paddingBottom/paddingLeft responsivos por breakpoint. */}
+      <Row ref={contentRef} flex={1} className={styles.content} overflowY="auto">
+        <ScrollContainerContext.Provider value={contentRef}>
+          {children}
+        </ScrollContainerContext.Provider>
       </Row>
       <Row
         as="nav"

@@ -2,6 +2,7 @@
 
 import { Column, ToggleButton, Text } from "@once-ui-system/core"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import styles from "./PrivacyPanel.module.css"
 
 const OPTIONS: { value: string; label: string }[] = [
   { value: "ALL",     label: "Todo" },
@@ -24,7 +25,7 @@ export function PrivacyPanel() {
   }
 
   return (
-    <Column gap="8" fillWidth>
+    <Column gap="8" fillWidth className={styles.panel}>
       <Text variant="label-default-s" onBackground="neutral-weak">Privacidad</Text>
       {OPTIONS.map(opt => (
         <ToggleButton key={opt.value} fillWidth horizontal="start" selected={active === opt.value} onClick={() => setVis(opt.value)}>

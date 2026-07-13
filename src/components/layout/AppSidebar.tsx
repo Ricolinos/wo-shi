@@ -24,13 +24,17 @@ export function AppSidebar() {
   return (
     <Column
       as="aside"
-      fillHeight
       vertical="between"
       paddingY="16"
       paddingX="8"
       gap="8"
+      width="64"
+      height="100dvh"
+      position="fixed"
+      top="0"
+      left="0"
+      zIndex={9}
       s={{ hide: true }}
-      style={{ width: 64, flexShrink: 0 }}
     >
       <Column gap="4" fillWidth vertical="center" flex={1}>
         {NAV_ITEMS.map(item => (

@@ -6,7 +6,8 @@ import { Column, Row, Heading, Skeleton } from "@once-ui-system/core"
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getFeedEntries } from "@/lib/actions/feed.actions"
-import { FeedCard } from "@/components/feed/FeedCard"
+import { FeedHeader } from "@/components/feed/FeedHeader"
+import { FeedInfiniteList } from "@/components/feed/FeedInfiniteList"
 import { BondFilterBar } from "@/components/feed/BondFilterBar"
 import { PrivacyPanel } from "@/components/feed/PrivacyPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -24,10 +25,23 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
 
   return (
     <AppShell>
-      <Column fillWidth paddingY="24" paddingX="16" gap="16">
-        <Heading variant="display-strong-xs">Feed</Heading>
-        <BondFilterBar />
-        <Row fillWidth gap="24" s={{ direction: "column" }} style={{ alignItems: "flex-start" }}>
+      <Column fillWidth gap="16">
+        <FeedHeader>
+          <Heading variant="display-strong-xs">Feed</Heading>
+          <BondFilterBar />
+        </FeedHeader>
+        {/*
+          Layout de 3 columnas simétrico: espaciador invisible (mismo ancho
+          que PrivacyPanel, oculto al apilarse en columna en móvil) + feed +
+          PrivacyPanel, para que el feed quede realmente centrado en la
+          ventana en vez de solo ocupar el espacio sobrante a la izquierda
+          del panel de privacidad.
+        */}
+        <Row fillWidth gap="24" paddingX="16" paddingBottom="24" s={{ direction: "column" }} style={{ alignItems: "flex-start" }}>
+          {/* Ancho exacto en rem, no SpacingToken — debe igualar el
+              max-width: 12rem de PrivacyPanel.module.css (SpacingToken "12"
+              serían 12px, no 12rem: no son la misma escala). */}
+          <Column style={{ width: "12rem" }} s={{ hide: true }} aria-hidden />
           <Column flex={1} gap="16" maxWidth="l">
             <Suspense fallback={<FeedSkeleton />}>
               <FeedList bondType={bondType} visibility={visibility} />
@@ -41,7 +55,7 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
 }
 
 async function FeedList({ bondType, visibility }: { bondType?: BondType; visibility: Visibility | "ALL" }) {
-  const entries = await getFeedEntries({ bondType, visibility })
+  const { entries, nextCursor } = await getFeedEntries({ bondType, visibility })
 
   if (entries.length === 0) {
     return (
@@ -54,9 +68,13 @@ async function FeedList({ bondType, visibility }: { bondType?: BondType; visibil
   }
 
   return (
-    <>
-      {entries.map((entry, index) => <FeedCard key={entry.id} entry={entry} index={index} />)}
-    </>
+    <FeedInfiniteList
+      key={`${bondType ?? "all"}-${visibility}`}
+      initialEntries={entries}
+      initialCursor={nextCursor}
+      bondType={bondType}
+      visibility={visibility}
+    />
   )
 }
 

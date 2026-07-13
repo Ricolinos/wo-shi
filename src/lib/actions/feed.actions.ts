@@ -39,13 +39,22 @@ export type FeedEntry = {
 export type FeedFilters = {
   bondType?: BondType
   visibility?: Visibility | "ALL"
+  cursor?: string
+  limit?: number
 }
 
-export async function getFeedEntries(filters: FeedFilters = {}): Promise<FeedEntry[]> {
-  const userId = await requireDbUser()
-  if (!userId) return []
+export type FeedPage = {
+  entries: FeedEntry[]
+  nextCursor: string | null
+}
 
-  const { bondType, visibility } = filters
+const DEFAULT_FEED_LIMIT = 15
+
+export async function getFeedEntries(filters: FeedFilters = {}): Promise<FeedPage> {
+  const userId = await requireDbUser()
+  if (!userId) return { entries: [], nextCursor: null }
+
+  const { bondType, visibility, cursor, limit = DEFAULT_FEED_LIMIT } = filters
   const visibilityWhere = await buildVisibilityWhere(userId, visibility)
 
   const entries = await prisma.entry.findMany({
@@ -55,8 +64,9 @@ export async function getFeedEntries(filters: FeedFilters = {}): Promise<FeedEnt
         ? { entryBonds: { some: { bond: { type: bondType } } } }
         : {}),
     },
-    orderBy: { date: "desc" },
-    take: 50,
+    orderBy: [{ date: "desc" }, { id: "desc" }],
+    take: limit + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     select: {
       id:         true,
       title:      true,
@@ -80,7 +90,11 @@ export async function getFeedEntries(filters: FeedFilters = {}): Promise<FeedEnt
     },
   })
 
-  return entries
+  const hasNextPage = entries.length > limit
+  const page = hasNextPage ? entries.slice(0, limit) : entries
+  const nextCursor = hasNextPage ? page[page.length - 1].id : null
+
+  return { entries: page, nextCursor }
 }
 
 async function getMutualFollowIds(userId: string): Promise<string[]> {

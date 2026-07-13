@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="theme-init" src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <Providers>
-        <Column as="body" background="page" fillWidth style={{ minHeight: "100dvh" }} margin="0" padding="0" suppressHydrationWarning>
+        <Column as="body" background="page" fillWidth height="100dvh" overflow="hidden" margin="0" padding="0" suppressHydrationWarning>
           <RevealFx fill position="absolute">
             <Background
               mask={{ x: effects.mask.x, y: effects.mask.y, radius: effects.mask.radius, cursor: effects.mask.cursor }}

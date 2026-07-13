@@ -1,0 +1,19 @@
+/*
+ * El sistema de breakpoints de Once UI (props xl/l/m/s/xs) no aplica de forma
+ * responsiva la prop `maxWidth` (solo cascada position/hide/direction/
+ * horizontal/vertical — ver ServerFlex/useResponsiveClasses del paquete), así
+ * que el ancho acotado en desktop (y su anulación en móvil para que el panel
+ * se expanda al apilarse en columna) vive en este CSS Module, mismo patrón
+ * que AppShell.module.css. El breakpoint 768px replica el "s" por defecto de
+ * Once UI (mismo breakpoint que usa `s={{ direction: "column" }}` en
+ * feed/page.tsx).
+ */
+.panel {
+  max-width: 12rem; /* ~192px, equivalente al ancho fijo original de 182px */
+}
+
+@media (max-width: 768px) {
+  .panel {
+    max-width: none;
+  }
+}
