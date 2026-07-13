@@ -22,6 +22,7 @@ import {
   HiOutlineUsers,
   HiOutlineChartBar,
   HiOutlineListBullet,
+  HiOutlinePencilSquare,
 } from "react-icons/hi2"
 
 export const iconLibrary: Partial<IconLibrary> = {
@@ -43,4 +44,5 @@ export const iconLibrary: Partial<IconLibrary> = {
   graph: HiOutlineChartBar,
   list: HiOutlineListBullet,
   heart: HiOutlineHeart,
+  edit: HiOutlinePencilSquare,
 }

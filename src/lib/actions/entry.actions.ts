@@ -25,6 +25,7 @@ export async function getJournalEntries() {
     take: 100,
     select: {
       id: true, title: true, body: true, date: true, location: true, visibility: true,
+      createdAt: true, editCount: true,
       media: { select: { id: true, type: true, url: true }, take: 1 },
       entryBonds: { select: { bond: { select: { id: true, name: true, type: true } } } },
     },
@@ -38,7 +39,8 @@ export async function getJournalEntry(entryId: string) {
   return prisma.entry.findFirst({
     where: { id: entryId, userId },
     select: {
-      id: true, title: true, body: true, date: true, location: true, visibility: true, editAccess: true,
+      id: true, title: true, body: true, date: true, location: true, latitude: true, longitude: true, visibility: true, editAccess: true,
+      createdAt: true, editCount: true,
       media: { select: { id: true, type: true, url: true, duration: true } },
       entryBonds: {
         select: {
@@ -169,6 +171,86 @@ export async function saveEntry(formData: FormData): Promise<SaveResult> {
     })
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo guardar la entrada" }
+  }
+
+  return { ok: true, entryId: entry.id }
+}
+
+export async function updateEntry(entryId: string, formData: FormData): Promise<SaveResult> {
+  const userId = await requireDbUser()
+  if (!userId) return { ok: false, error: "No autenticado" }
+
+  // anti-IDOR: la entrada debe pertenecer al usuario antes de mutarla
+  const owned = await prisma.entry.findFirst({ where: { id: entryId, userId }, select: { id: true } })
+  if (!owned) return { ok: false, error: "Entrada no encontrada" }
+
+  let draft: EntryDraft & { isDraft?: boolean }
+  try {
+    draft = JSON.parse(formData.get("draft") as string)
+  } catch {
+    return { ok: false, error: "Datos inválidos" }
+  }
+
+  if (!draft.body?.trim()) return { ok: false, error: "El cuerpo de la entrada no puede estar vacío" }
+
+  const mediaUploads: { id: string; url: string; type: string; filename: string; size: number }[] = []
+
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("media-") || !(value instanceof File)) continue
+    const mediaId = key.replace("media-", "")
+    const localMedia = draft.media.find(m => m.id === mediaId)
+    if (!localMedia) continue
+
+    const blob = await put(`wo-shi/${userId}/${Date.now()}-${value.name}`, value, {
+      access: "private",
+    })
+    mediaUploads.push({
+      id: mediaId,
+      url: blob.url,
+      type: localMedia.type,
+      filename: value.name,
+      size: value.size,
+    })
+  }
+
+  let entry
+  try {
+    entry = await prisma.$transaction(async tx => {
+      const updatedEntry = await tx.entry.update({
+        where: { id: entryId },
+        data: {
+          title:      draft.title?.trim() || null,
+          body:       draft.body.trim(),
+          date:       new Date(`${draft.date}T${draft.time}`),
+          location:   draft.location ?? null,
+          latitude:   draft.latitude ?? null,
+          longitude:  draft.longitude ?? null,
+          visibility: draft.visibility,
+          editAccess: draft.editAccess,
+          editCount:  { increment: 1 },
+        },
+      })
+
+      if (mediaUploads.length) {
+        await tx.media.createMany({
+          data: mediaUploads.map(m => ({
+            entryId:  updatedEntry.id,
+            type:     m.type as MediaType,
+            url:      m.url,
+            filename: m.filename,
+            size:     m.size,
+          })),
+        })
+      }
+
+      // fuera de alcance de esta versión: no se editan persons/emotions/ideas
+      // (bonds ya materializados con snapshots de madurez) — si el FormData
+      // los trae, se ignoran deliberadamente.
+
+      return updatedEntry
+    })
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar la entrada" }
   }
 
   return { ok: true, entryId: entry.id }

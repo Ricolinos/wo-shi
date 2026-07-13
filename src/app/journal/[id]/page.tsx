@@ -1,9 +1,10 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect, notFound } from "next/navigation"
-import { Column, Row, Heading, Text, Tag, IconButton, SmartLink, Media } from "@once-ui-system/core"
+import { Column, Row, Heading, Text, Tag, IconButton, SmartLink, Media, Button } from "@once-ui-system/core"
 import { getJournalEntry } from "@/lib/actions/entry.actions"
 import { AppShell } from "@/components/layout/AppShell"
 import { BOND_TYPE_SCHEME } from "@/lib/bond-subtypes"
+import { EntryTimestamps } from "@/components/journal/EntryTimestamps"
 
 const VISIBILITY_LABEL = { PRIVATE: "Solo yo", FRIENDS: "Amigos", PUBLIC: "Público" } as const
 
@@ -18,7 +19,7 @@ export default async function JournalDetailPage({ params }: { params: Promise<{ 
   return (
     <AppShell>
       <Column fillWidth maxWidth="m" paddingY="24" paddingX="16" gap="16" style={{ margin: "0 auto" }}>
-        <Row gap="12" vertical="center">
+        <Row gap="12" vertical="center" wrap>
           <SmartLink href="/journal"><IconButton icon="chevronLeft" variant="secondary" size="xl" aria-label="Volver al diario" /></SmartLink>
           <Column flex={1} gap="0">
             <Heading variant="display-strong-xs">{entry.title || "Entrada sin título"}</Heading>
@@ -26,8 +27,12 @@ export default async function JournalDetailPage({ params }: { params: Promise<{ 
               {new Date(entry.date).toLocaleString("es", { dateStyle: "long", timeStyle: "short" })}
               {entry.location ? ` · ${entry.location}` : ""}
             </Text>
+            <EntryTimestamps createdAt={entry.createdAt} editCount={entry.editCount} />
           </Column>
           <Tag variant="neutral" label={VISIBILITY_LABEL[entry.visibility]} />
+          <SmartLink href={`/journal/${entry.id}/edit`}>
+            <Button variant="secondary" prefixIcon="edit">Editar</Button>
+          </SmartLink>
         </Row>
 
         {entry.media.filter(m => m.type !== "AUDIO").length > 0 && (

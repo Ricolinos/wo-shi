@@ -5,6 +5,7 @@ import { Column, Row, Heading, Text, Tag, SmartLink, Button, Skeleton } from "@o
 import { getJournalEntries } from "@/lib/actions/entry.actions"
 import { AppShell } from "@/components/layout/AppShell"
 import { BOND_TYPE_SCHEME } from "@/lib/bond-subtypes"
+import { EntryTimestamps } from "@/components/journal/EntryTimestamps"
 
 const VISIBILITY_LABEL = { PRIVATE: "Solo yo", FRIENDS: "Amigos", PUBLIC: "Público" } as const
 
@@ -49,6 +50,7 @@ async function JournalList() {
                 <Text variant="label-strong-s">{entry.title || new Date(entry.date).toLocaleDateString("es")}</Text>
                 <Tag variant="neutral" label={VISIBILITY_LABEL[entry.visibility]} />
               </Row>
+              <EntryTimestamps createdAt={entry.createdAt} editCount={entry.editCount} />
               <Text variant="body-default-s" onBackground="neutral-weak" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {entry.body}
               </Text>
