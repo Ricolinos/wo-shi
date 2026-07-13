@@ -42,3 +42,7 @@ next-env.d.ts
 
 # git worktrees
 .worktrees/
+
+# claude code — config personal con permisos locales (nunca compartir)
+.claude/settings.local.json
+.claude/.DS_Store
