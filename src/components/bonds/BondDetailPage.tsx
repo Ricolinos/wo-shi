@@ -65,7 +65,7 @@ export function BondDetailPage({ bond, entries }: { bond: BondDetail; entries: B
 
       <BondDetailSubtoolbar chartType={chartType} onChartType={setChartType} period={period} onPeriod={setPeriod} />
 
-      <Row gap="24" fillWidth style={{ alignItems: "flex-start" }} wrap>
+      <Row gap="24" fillWidth s={{ direction: "column" }} style={{ alignItems: "flex-start" }} wrap>
         <Column flex={1}>
           <BondDetailChart
             name={bond.name}

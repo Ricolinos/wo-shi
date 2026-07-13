@@ -1,13 +1,17 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
+import { useSearchParams } from "next/navigation"
 import { useSignIn } from "@clerk/nextjs/legacy"
 import { Column, Row, Input, Button, Text, SmartLink } from "@once-ui-system/core"
 import { SocialAuthButtons, type OAuthProviderStrategy } from "./SocialAuthButtons"
 import { translateClerkError } from "./clerkErrors"
+import { getSafeRedirect } from "./redirectUrl"
 
 export function SignInForm() {
   const { isLoaded, signIn, setActive } = useSignIn()
+  const searchParams = useSearchParams()
+  const redirectTarget = getSafeRedirect(searchParams)
 
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
@@ -25,7 +29,7 @@ export function SignInForm() {
       const result = await signIn.create({ identifier, password })
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId })
-        window.location.href = "/feed"
+        window.location.href = redirectTarget
         return
       }
       setErrorMsg(`Error inesperado (${result.status}). Intenta de nuevo.`)
@@ -44,7 +48,7 @@ export function SignInForm() {
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/feed",
+        redirectUrlComplete: redirectTarget,
       })
     } catch (err) {
       setOauthPending(null)

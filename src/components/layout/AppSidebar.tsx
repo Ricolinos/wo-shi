@@ -7,7 +7,7 @@ import {
 } from "@once-ui-system/core"
 import type { IconName } from "@once-ui-system/core"
 
-const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
+export const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
   { href: "/feed",    label: "Feed",     icon: "feed" as IconName },
   { href: "/journal", label: "Diario",   icon: "journal" as IconName },
   { href: "/bonds",   label: "Vínculos", icon: "bonds" as IconName },
@@ -29,6 +29,7 @@ export function AppSidebar() {
       paddingY="16"
       paddingX="8"
       gap="8"
+      s={{ hide: true }}
       style={{ width: 64, flexShrink: 0 }}
     >
       <Column gap="4" fillWidth vertical="center" flex={1}>

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Column, Row, Textarea, Input, Button, Text, Tag, IconButton, Heading } from "@once-ui-system/core"
+import { Column, Row, Textarea, Input, Button, Text, Tag, IconButton, Heading, DateInput, Media } from "@once-ui-system/core"
 import { PersonModal } from "@/components/journal/PersonModal"
 import { EmotionModal } from "@/components/journal/EmotionModal"
 import { IdeaModal } from "@/components/journal/IdeaModal"
@@ -112,8 +112,17 @@ export default function NewEntryPage() {
           <Input id="entry-title" label="¿Qué pasó hoy?" value={draft.title} onChange={e => setField("title", e.target.value)} />
           <Textarea id="entry-body" label="Escribe libremente. Esto es tuyo…" lines={5} value={draft.body} onChange={e => setField("body", e.target.value)} />
           <Row gap="8" wrap>
-            <input type="date" value={draft.date} onChange={e => setField("date", e.target.value)} style={{ font: "inherit" }} />
-            <input type="time" value={draft.time} onChange={e => setField("time", e.target.value)} style={{ font: "inherit" }} />
+            <DateInput
+              id="entry-datetime"
+              label="Fecha y hora"
+              timePicker
+              value={new Date(`${draft.date}T${draft.time}:00`)}
+              onChange={(d: Date) => {
+                const pad = (n: number) => String(n).padStart(2, "0")
+                setField("date", `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`)
+                setField("time", `${pad(d.getHours())}:${pad(d.getMinutes())}`)
+              }}
+            />
             <Button
               variant="secondary"
               prefixIcon="location"
@@ -168,7 +177,7 @@ export default function NewEntryPage() {
               {draft.media.map(m => (
                 <Row key={m.id} position="relative" width="64" height="64" radius="m" border="neutral-alpha-weak" style={{ overflow: "hidden" }}>
                   {m.previewUrl
-                    ? <img src={m.previewUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                    ? <Media src={m.previewUrl} unoptimized alt="" aspectRatio="1/1" objectFit="cover" fillWidth />
                     : <Row fillWidth fillHeight horizontal="center" vertical="center">{m.type === "AUDIO" ? "🎙" : "📹"}</Row>}
                   <IconButton icon="close" size="s" variant="secondary" onClick={() => removeMedia(m.id)} style={{ position: "absolute", top: 2, right: 2 }} aria-label="Quitar" />
                 </Row>

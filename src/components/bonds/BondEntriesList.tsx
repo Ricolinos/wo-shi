@@ -5,7 +5,7 @@ import type { BondEntry } from "@/types/bonds"
 
 export function BondEntriesList({ entries }: { entries: BondEntry[] }) {
   return (
-    <Column gap="8" style={{ width: 220 }}>
+    <Column gap="8" fillWidth>
       <Text variant="label-default-s" onBackground="neutral-weak">ENTRADAS</Text>
       <Column gap="4" style={{ maxHeight: 500, overflowY: "auto" }}>
         {entries.length === 0 && <Text variant="body-default-s" onBackground="neutral-weak">Sin entradas todavía.</Text>}

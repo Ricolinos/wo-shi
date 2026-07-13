@@ -95,7 +95,7 @@ export function PersonModal({ onClose, onAdd, existing }: Props) {
                 onClick={() => !alreadyAdded(r.id) && handleSelect(r)}
                 style={{ cursor: alreadyAdded(r.id) ? "not-allowed" : "pointer", opacity: alreadyAdded(r.id) ? 0.4 : 1 }}
               >
-                <Avatar src={r.avatar} value={r.name.slice(0, 2)} size="s" />
+                <Avatar src={r.avatar} value={r.avatar ? undefined : r.name.slice(0, 2)} size="s" />
                 <Column flex={1} gap="0">
                   <Text variant="body-default-s">{r.name}</Text>
                   <Text variant="label-default-s" onBackground="neutral-weak">

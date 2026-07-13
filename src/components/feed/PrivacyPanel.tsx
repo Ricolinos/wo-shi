@@ -24,7 +24,7 @@ export function PrivacyPanel() {
   }
 
   return (
-    <Column gap="8" style={{ width: 182 }}>
+    <Column gap="8" fillWidth>
       <Text variant="label-default-s" onBackground="neutral-weak">Privacidad</Text>
       {OPTIONS.map(opt => (
         <ToggleButton key={opt.value} fillWidth horizontal="start" selected={active === opt.value} onClick={() => setVis(opt.value)}>

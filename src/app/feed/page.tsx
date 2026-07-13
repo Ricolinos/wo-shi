@@ -2,7 +2,7 @@
 // Página del feed — pantalla principal post-login.
 
 import { Suspense } from "react"
-import { Column, Row, Heading } from "@once-ui-system/core"
+import { Column, Row, Heading, Skeleton } from "@once-ui-system/core"
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getFeedEntries } from "@/lib/actions/feed.actions"
@@ -22,30 +22,57 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
   const bondType   = bond as BondType | undefined
   const visibility = (vis ?? "ALL") as Visibility | "ALL"
 
-  const entries = await getFeedEntries({ bondType, visibility })
-
   return (
     <AppShell>
       <Column fillWidth paddingY="24" paddingX="16" gap="16">
         <Heading variant="display-strong-xs">Feed</Heading>
         <BondFilterBar />
-        <Row fillWidth gap="24" style={{ alignItems: "flex-start" }}>
+        <Row fillWidth gap="24" s={{ direction: "column" }} style={{ alignItems: "flex-start" }}>
           <Column flex={1} gap="16" maxWidth="l">
-            <Suspense>
-              {entries.length === 0 ? (
-                <Column padding="40" horizontal="center">
-                  <Heading variant="body-default-m" onBackground="neutral-weak">
-                    Aún no hay entradas que mostrar.
-                  </Heading>
-                </Column>
-              ) : (
-                entries.map(entry => <FeedCard key={entry.id} entry={entry} />)
-              )}
+            <Suspense fallback={<FeedSkeleton />}>
+              <FeedList bondType={bondType} visibility={visibility} />
             </Suspense>
           </Column>
           <PrivacyPanel />
         </Row>
       </Column>
     </AppShell>
+  )
+}
+
+async function FeedList({ bondType, visibility }: { bondType?: BondType; visibility: Visibility | "ALL" }) {
+  const entries = await getFeedEntries({ bondType, visibility })
+
+  if (entries.length === 0) {
+    return (
+      <Column padding="40" horizontal="center">
+        <Heading variant="body-default-m" onBackground="neutral-weak">
+          Aún no hay entradas que mostrar.
+        </Heading>
+      </Column>
+    )
+  }
+
+  return (
+    <>
+      {entries.map((entry, index) => <FeedCard key={entry.id} entry={entry} index={index} />)}
+    </>
+  )
+}
+
+function FeedSkeleton() {
+  return (
+    <Column gap="16" fillWidth>
+      {[0, 1, 2].map(i => (
+        <Column key={i} radius="l" border="neutral-alpha-weak" background="surface" padding="16" gap="12" fillWidth>
+          <Row gap="8" vertical="center">
+            <Skeleton shape="circle" width="xs" height="xs" />
+            <Skeleton shape="line" width="s" />
+            <Skeleton shape="line" width="s" />
+          </Row>
+          <Skeleton shape="block" fillWidth height="l" />
+        </Column>
+      ))}
+    </Column>
   )
 }

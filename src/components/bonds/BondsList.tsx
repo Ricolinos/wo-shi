@@ -35,6 +35,8 @@ export function BondsList({ bonds }: { bonds: BondSummary[] }) {
             vertical="center"
             padding="12"
             radius="m"
+            border="neutral-alpha-weak"
+            background="surface"
             onClick={() => router.push(`/bonds/${bond.id}`)}
             style={{ cursor: "pointer" }}
           >

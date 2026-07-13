@@ -1,15 +1,19 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
+import { useSearchParams } from "next/navigation"
 import { useSignUp } from "@clerk/nextjs/legacy"
 import { Column, Row, Input, Button, Text, SmartLink } from "@once-ui-system/core"
 import { SocialAuthButtons, type OAuthProviderStrategy } from "./SocialAuthButtons"
 import { translateClerkError } from "./clerkErrors"
+import { getSafeRedirect } from "./redirectUrl"
 
 type Step = "register" | "verify"
 
 export function SignUpForm() {
   const { isLoaded, signUp, setActive } = useSignUp()
+  const searchParams = useSearchParams()
+  const redirectTarget = getSafeRedirect(searchParams)
 
   const [step, setStep] = useState<Step>("register")
   const [username, setUsername] = useState("")
@@ -49,7 +53,7 @@ export function SignUpForm() {
       await signUp.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/feed",
+        redirectUrlComplete: redirectTarget,
       })
     } catch (err) {
       setOauthPending(null)
@@ -67,7 +71,7 @@ export function SignUpForm() {
       const result = await signUp.attemptEmailAddressVerification({ code })
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId })
-        window.location.href = "/feed"
+        window.location.href = redirectTarget
       }
     } catch (err) {
       setErrorMsg(translateClerkError(err, "Código incorrecto"))
