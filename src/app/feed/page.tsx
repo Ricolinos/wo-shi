@@ -4,7 +4,7 @@
 
 import { redirect }       from "next/navigation"
 import { Suspense }       from "react"
-import { auth }           from "@/auth"
+import { auth }           from "@clerk/nextjs/server"
 import { getFeedEntries } from "@/lib/actions/feed.actions"
 import { FeedCard }       from "@/components/feed/FeedCard"
 import { AppSidebar }     from "@/components/layout/AppSidebar"
@@ -16,8 +16,8 @@ type SearchParams = Promise<{ bond?: string; vis?: string }>
 
 export default async function FeedPage({ searchParams }: { searchParams: SearchParams }) {
   // Verificar sesión
-  const session = await auth()
-  if (!session?.user) redirect("/auth")
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
 
   // Leer filtros desde la URL
   const { bond, vis } = await searchParams

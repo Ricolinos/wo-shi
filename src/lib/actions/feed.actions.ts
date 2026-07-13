@@ -3,7 +3,7 @@
 // Acción de servidor para obtener entradas del feed con filtros de visibilidad y tipo de bond.
 // Respeta las reglas de privacidad: PRIVATE = solo propias, FRIENDS = mutuas, PUBLIC = cualquier usuario autenticado.
 
-import { auth } from "@/auth"
+import { requireDbUser } from "@/lib/user"
 import { prisma } from "@/lib/prisma"
 import type { BondType, Visibility } from "@prisma/client"
 
@@ -42,10 +42,9 @@ export type FeedFilters = {
 }
 
 export async function getFeedEntries(filters: FeedFilters = {}): Promise<FeedEntry[]> {
-  const session = await auth()
-  if (!session?.user?.id) return []
+  const userId = await requireDbUser()
+  if (!userId) return []
 
-  const userId = session.user.id
   const { bondType, visibility } = filters
 
   const visibilityWhere = await buildVisibilityWhere(userId, visibility)

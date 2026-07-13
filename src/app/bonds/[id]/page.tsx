@@ -3,7 +3,7 @@
 
 import { notFound, redirect } from "next/navigation"
 import { Suspense }            from "react"
-import { auth }                from "@/auth"
+import { auth }                from "@clerk/nextjs/server"
 import { getBondDetail, getBondEntries } from "@/lib/actions/bonds.actions"
 import { AppSidebar }          from "@/components/layout/AppSidebar"
 import { BondDetailPage }      from "@/components/bonds/BondDetailPage"
@@ -14,8 +14,8 @@ interface Props {
 }
 
 export default async function BondDetailRoute({ params, searchParams }: Props) {
-  const session = await auth()
-  if (!session?.user) redirect("/auth")
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
 
   const { id } = await params
   const sp      = await searchParams

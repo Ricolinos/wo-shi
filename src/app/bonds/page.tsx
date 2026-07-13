@@ -4,7 +4,7 @@
 
 import { redirect }              from "next/navigation"
 import { Suspense }              from "react"
-import { auth }                  from "@/auth"
+import { auth }                  from "@clerk/nextjs/server"
 import { getBondsWithSnapshots } from "@/lib/actions/bonds.actions"
 import { AppSidebar }            from "@/components/layout/AppSidebar"
 import { BondsPage }             from "@/components/bonds/BondsPage"
@@ -20,8 +20,8 @@ type SearchParams = Promise<{
 }>
 
 export default async function BondsRoute({ searchParams }: { searchParams: SearchParams }) {
-  const session = await auth()
-  if (!session?.user) redirect("/auth")
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
 
   const sp = await searchParams
 

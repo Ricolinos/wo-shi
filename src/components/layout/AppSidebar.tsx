@@ -6,6 +6,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { UserButton } from "@clerk/nextjs"
 
 type NavItem = {
   href: string
@@ -129,25 +130,11 @@ export function AppSidebar() {
           </span>
         </Link>
 
-        <Link
-          href="/settings"
-          className="group relative w-[34px] h-[34px] rounded-full bg-[#AFA9EC] border-2 border-transparent hover:border-[#534AB7] transition-colors block"
-          aria-label="Mi perfil"
-        >
-          <span className="
-            pointer-events-none absolute left-[calc(100%+10px)] top-1/2
-            -translate-y-1/2 -translate-x-1
-            opacity-0 group-hover:opacity-100 group-hover:translate-x-0
-            transition-all duration-150
-            bg-[#1a1a2e] text-white text-[11px] font-medium
-            px-2.5 py-[5px] rounded-md whitespace-nowrap z-50
-            before:content-[''] before:absolute before:right-full before:top-1/2
-            before:-translate-y-1/2 before:border-[5px] before:border-transparent
-            before:border-r-[#1a1a2e]
-          ">
-            Mi perfil
-          </span>
-        </Link>
+        <UserButton
+          appearance={{
+            elements: { avatarBox: { width: 34, height: 34 } },
+          }}
+        />
       </div>
     </aside>
   )

@@ -1,7 +1,7 @@
 // src/lib/actions/entry.actions.ts
 "use server"
 
-import { auth } from "@/auth"
+import { requireDbUser } from "@/lib/user"
 import { prisma } from "@/lib/prisma"
 import { put } from "@vercel/blob"   // npm install @vercel/blob
 import type { EntryDraft, PersonBond, EmotionBond, IdeaBond } from "@/types/journal"
@@ -13,9 +13,8 @@ type SaveResult =
   | { ok: false; error: string }
 
 export async function saveEntry(formData: FormData): Promise<SaveResult> {
-  const session = await auth()
-  if (!session?.user?.id) return { ok: false, error: "No autenticado" }
-  const userId = session.user.id
+  const userId = await requireDbUser()
+  if (!userId) return { ok: false, error: "No autenticado" }
 
   // ── parsear draft ──────────────────────────────────────────────────────────
   let draft: EntryDraft & { isDraft?: boolean }
@@ -49,7 +48,9 @@ export async function saveEntry(formData: FormData): Promise<SaveResult> {
   }
 
   // ── transacción principal ──────────────────────────────────────────────────
-  const entry = await prisma.$transaction(async tx => {
+  let entry
+  try {
+    entry = await prisma.$transaction(async tx => {
 
     // 1. crear la entrada
     const newEntry = await tx.entry.create({
@@ -137,7 +138,10 @@ export async function saveEntry(formData: FormData): Promise<SaveResult> {
     }
 
     return newEntry
-  })
+    })
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo guardar la entrada" }
+  }
 
   return { ok: true, entryId: entry.id }
 }
@@ -153,6 +157,10 @@ async function upsertBond(
   linkedUserId?: string,
 ) {
   if (bondId) {
+    // verificar que el bond pertenece al usuario antes de mutarlo (evita IDOR)
+    const owned = await tx.bond.findFirst({ where: { id: bondId, userId }, select: { id: true } })
+    if (!owned) throw new Error("Vínculo no encontrado")
+
     // incrementar maturity level
     return tx.bond.update({
       where: { id: bondId },

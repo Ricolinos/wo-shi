@@ -1,7 +1,7 @@
 // src/lib/actions/bonds.actions.ts
 "use server"
 
-import { auth }   from "@/auth"
+import { requireDbUser } from "@/lib/user"
 import { prisma } from "@/lib/prisma"
 import type { BondType } from "@prisma/client"
 import type { BondSummary, BondDetail, BondEntry, BondPeriod, BondMaturityFilter } from "@/types/bonds"
@@ -23,9 +23,8 @@ export async function getBondsWithSnapshots(filters: {
   maturity?: BondMaturityFilter
   period?:   BondPeriod
 }): Promise<BondSummary[]> {
-  const session = await auth()
-  if (!session?.user?.id) return []
-  const userId = session.user.id
+  const userId = await requireDbUser()
+  if (!userId) return []
 
   const { type, subtype, maturity = "ALL", period = "3m" } = filters
   const since = periodStart(period)
@@ -85,9 +84,8 @@ export async function getBondsWithSnapshots(filters: {
 
 // ── Detalle de un bond para /bonds/[id] ───────────────────────────────────────
 export async function getBondDetail(bondId: string): Promise<BondDetail | null> {
-  const session = await auth()
-  if (!session?.user?.id) return null
-  const userId = session.user.id
+  const userId = await requireDbUser()
+  if (!userId) return null
 
   const bond = await prisma.bond.findFirst({
     where: { id: bondId, userId },
@@ -127,9 +125,8 @@ export async function getBondDetail(bondId: string): Promise<BondDetail | null> 
 
 // ── Entradas relacionadas con un bond ─────────────────────────────────────────
 export async function getBondEntries(bondId: string): Promise<BondEntry[]> {
-  const session = await auth()
-  if (!session?.user?.id) return []
-  const userId = session.user.id
+  const userId = await requireDbUser()
+  if (!userId) return []
 
   const entryBonds = await prisma.entryBond.findMany({
     where: { bondId, entry: { userId } },
@@ -153,9 +150,8 @@ export async function getBondEntries(bondId: string): Promise<BondEntry[]> {
 
 // ── Bonds del usuario para el buscador de comparación ─────────────────────────
 export async function searchUserBonds(q: string): Promise<{ id: string; name: string; type: BondType }[]> {
-  const session = await auth()
-  if (!session?.user?.id) return []
-  const userId = session.user.id
+  const userId = await requireDbUser()
+  if (!userId) return []
 
   return prisma.bond.findMany({
     where: {
