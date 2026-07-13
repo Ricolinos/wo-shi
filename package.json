@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.17",
+    "@once-ui-system/core": "^1.7.12",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@supabase/supabase-js": "^2.109.0",
@@ -27,13 +28,11 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
-    "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
   }

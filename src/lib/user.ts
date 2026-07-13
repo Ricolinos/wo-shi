@@ -17,7 +17,6 @@ export async function requireDbUser(): Promise<string | null> {
   })
   if (existing) return userId
 
-  // primera vez que este usuario de Clerk toca la app — crear su fila
   const cu = await currentUser()
   if (!cu) return null
 
@@ -39,7 +38,6 @@ export async function requireDbUser(): Promise<string | null> {
       },
     })
   } catch {
-    // colisión de username — reintentar con sufijo derivado del userId
     await prisma.user.create({
       data: {
         id: userId,

@@ -6,20 +6,20 @@ export type BondType = "PERSON" | "EMOTION" | "IDEA" | "BELIEF" | "PLACE" | "GRO
 export type MediaType = "IMAGE" | "VIDEO" | "AUDIO"
 
 export interface PersonBond {
-  bondId?: string         // si ya existe en DB
+  bondId?: string
   name: string
-  linkedUserId?: string   // si está vinculado a un usuario real
+  linkedUserId?: string
   isUser: boolean
   notified: boolean
-  intensity: number       // 1-10
-  proximity: number       // 1-10
+  intensity: number
+  proximity: number
   privateNote?: string
 }
 
 export interface EmotionBond {
   bondId?: string
   name: string
-  type: "EMOTION" | "BELIEF"  // sentimiento se guarda como EMOTION
+  type: "EMOTION" | "BELIEF"
   subtype: "emotion" | "feeling" | "mood"
   intensity: number
   isNew: boolean
@@ -29,7 +29,7 @@ export interface IdeaBond {
   bondId?: string
   name: string
   type: "IDEA" | "BELIEF"
-  relevance: number       // 1-10
+  relevance: number
   isNew: boolean
 }
 
@@ -39,7 +39,7 @@ export interface GroupRef {
 }
 
 export interface MediaFile {
-  id: string              // uuid local
+  id: string
   type: MediaType
   file: File
   previewUrl?: string
@@ -49,8 +49,8 @@ export interface MediaFile {
 export interface EntryDraft {
   title: string
   body: string
-  date: string            // ISO
-  time: string            // HH:mm
+  date: string
+  time: string
   location?: string
   latitude?: number
   longitude?: number

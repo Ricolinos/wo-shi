@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma"
 import type { BondType } from "@prisma/client"
 import type { BondSummary, BondDetail, BondEntry, BondPeriod, BondMaturityFilter } from "@/types/bonds"
 
-// Calcular fecha de inicio según período
 function periodStart(period: BondPeriod): Date | undefined {
   if (period === "all") return undefined
   const d = new Date()
@@ -16,7 +15,6 @@ function periodStart(period: BondPeriod): Date | undefined {
   return d
 }
 
-// ── Lista de bonds para /bonds ────────────────────────────────────────────────
 export async function getBondsWithSnapshots(filters: {
   type?:     BondType | "ALL"
   subtype?:  string | null
@@ -29,7 +27,6 @@ export async function getBondsWithSnapshots(filters: {
   const { type, subtype, maturity = "ALL", period = "3m" } = filters
   const since = periodStart(period)
 
-  // Filtro de madurez
   const maturityWhere =
     maturity === "tags"  ? { maturityLevel: { lt: 5 } } :
     maturity === "bonds" ? { maturityLevel: { gte: 5 } } :
@@ -82,7 +79,6 @@ export async function getBondsWithSnapshots(filters: {
   })
 }
 
-// ── Detalle de un bond para /bonds/[id] ───────────────────────────────────────
 export async function getBondDetail(bondId: string): Promise<BondDetail | null> {
   const userId = await requireDbUser()
   if (!userId) return null
@@ -123,7 +119,6 @@ export async function getBondDetail(bondId: string): Promise<BondDetail | null> 
   }
 }
 
-// ── Entradas relacionadas con un bond ─────────────────────────────────────────
 export async function getBondEntries(bondId: string): Promise<BondEntry[]> {
   const userId = await requireDbUser()
   if (!userId) return []
@@ -134,9 +129,7 @@ export async function getBondEntries(bondId: string): Promise<BondEntry[]> {
     take: 50,
     select: {
       intensity: true,
-      entry: {
-        select: { id: true, title: true, date: true },
-      },
+      entry: { select: { id: true, title: true, date: true } },
     },
   })
 
@@ -148,7 +141,6 @@ export async function getBondEntries(bondId: string): Promise<BondEntry[]> {
   }))
 }
 
-// ── Bonds del usuario para el buscador de comparación ─────────────────────────
 export async function searchUserBonds(q: string): Promise<{ id: string; name: string; type: BondType }[]> {
   const userId = await requireDbUser()
   if (!userId) return []
@@ -163,4 +155,28 @@ export async function searchUserBonds(q: string): Promise<{ id: string; name: st
     select: { id: true, name: true, type: true },
     orderBy: { updatedAt: "desc" },
   })
+}
+
+// ── Grupos (nuevo, para /groups) ──────────────────────────────────────────────
+
+export async function getGroups() {
+  const userId = await requireDbUser()
+  if (!userId) return []
+
+  return prisma.group.findMany({
+    where: { userId },
+    include: { _count: { select: { groupBonds: true, groupEntries: true } } },
+    orderBy: { updatedAt: "desc" },
+  })
+}
+
+export async function createGroup(name: string, description?: string) {
+  const userId = await requireDbUser()
+  if (!userId) return { ok: false as const, error: "No autenticado" }
+  if (!name.trim()) return { ok: false as const, error: "El nombre no puede estar vacío" }
+
+  const group = await prisma.group.create({
+    data: { userId, name: name.trim(), description: description?.trim() || null },
+  })
+  return { ok: true as const, groupId: group.id }
 }

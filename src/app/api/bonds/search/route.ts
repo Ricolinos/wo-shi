@@ -1,4 +1,3 @@
-// src/app/api/bonds/search/route.ts
 import { requireDbUser } from "@/lib/user"
 import { NextResponse } from "next/server"
 import { searchBondsAndUsers } from "@/lib/actions/entry.actions"
