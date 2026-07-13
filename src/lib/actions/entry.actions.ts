@@ -13,6 +13,43 @@ type SaveResult =
   | { ok: true;  entryId: string }
   | { ok: false; error: string }
 
+// ── /journal (lista) y /journal/[id] (detalle) — solo entradas propias ────────
+
+export async function getJournalEntries() {
+  const userId = await requireDbUser()
+  if (!userId) return []
+
+  return prisma.entry.findMany({
+    where: { userId },
+    orderBy: { date: "desc" },
+    take: 100,
+    select: {
+      id: true, title: true, body: true, date: true, location: true, visibility: true,
+      media: { select: { id: true, type: true, url: true }, take: 1 },
+      entryBonds: { select: { bond: { select: { id: true, name: true, type: true } } } },
+    },
+  })
+}
+
+export async function getJournalEntry(entryId: string) {
+  const userId = await requireDbUser()
+  if (!userId) return null
+
+  return prisma.entry.findFirst({
+    where: { id: entryId, userId },
+    select: {
+      id: true, title: true, body: true, date: true, location: true, visibility: true, editAccess: true,
+      media: { select: { id: true, type: true, url: true, duration: true } },
+      entryBonds: {
+        select: {
+          intensity: true, proximity: true, note: true,
+          bond: { select: { id: true, name: true, type: true, linkedUserId: true } },
+        },
+      },
+    },
+  })
+}
+
 export async function saveEntry(formData: FormData): Promise<SaveResult> {
   const userId = await requireDbUser()
   if (!userId) return { ok: false, error: "No autenticado" }
